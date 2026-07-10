@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V1.8 实战版</title>
+    <title>宝可梦Sleep 效率计算器 V1.9</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -71,7 +71,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>宝可梦Sleep 效率计算器 <small>V1.8 实战版</small></h2>
+    <h2>宝可梦Sleep 效率计算器 <small>V1.9</small></h2>
     <div class="note">※ 宝可梦默认等级：70级（效率比与等级无关）</div>
 
     <div class="row">
@@ -101,7 +101,7 @@
         <select id="natureSelect"></select>
     </div>
 
-    <div class="checkbox-row">
+    <div class="checkbox-row" id="realisticRow">
         <input type="checkbox" id="realisticModeCheckbox">
         <label for="realisticModeCheckbox">☑️ 实战估算（考虑技能打折）</label>
     </div>
@@ -126,7 +126,7 @@ const BERRY_BOOST_MONS_DATA = {
 };
 const LATIOS_DATA = { prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78 };
 
-// 兑现系数：基础技能概率 -> 系数
+// 兑现系数（能量填充M/树果遽增/拉帝欧斯）
 const REALISTIC_COEFF = {
     "电龙": 0.92,
     "树才怪": 0.90,
@@ -137,6 +137,9 @@ const REALISTIC_COEFF = {
     "谜拟Q": 0.94,
     "拉帝欧斯（神兽）": 0.93,
 };
+
+// 技能型通用兑现系数（无具体宝可梦，取平均值）
+const SKILL_TYPE_REALISTIC_COEFF = 0.90;
 
 const SUB_SKILLS = {
     "帮M":    { speed: 0.14, skill: 1.0, food: 1.0, berry: 1 },
@@ -175,6 +178,7 @@ const subCheckboxes = document.getElementById('subCheckboxes');
 const natureSelect = document.getElementById('natureSelect');
 const resultBox = document.getElementById('resultBox');
 const realisticCheckbox = document.getElementById('realisticModeCheckbox');
+const realisticRow = document.getElementById('realisticRow');
 
 let maxSubs = 3;
 let currentType = '树果型';
@@ -210,6 +214,7 @@ function onTypeChange() {
     let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
     renderSubCheckboxes(showBerryS);
 
+    // 宝可梦选择框
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -232,6 +237,7 @@ function onTypeChange() {
         pokeRow.style.display = 'none';
     }
 
+    // 副技能上限与说明
     if (currentType === '树果型') {
         maxSubs = 3;
         subNote.textContent = '※ 默认附带树果S，最多再选3个副技能';
@@ -241,6 +247,14 @@ function onTypeChange() {
     } else {
         maxSubs = 4;
         subNote.textContent = '※ 最多选择4个副技能';
+    }
+
+    // 控制实战估算复选框的显示
+    if (currentType === '树果型' || currentType === '食材型') {
+        realisticRow.style.display = 'none';
+        realisticCheckbox.checked = false;
+    } else {
+        realisticRow.style.display = 'flex';
     }
 
     enforceSubLimit();
@@ -316,11 +330,15 @@ function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
 function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useRealistic) {
     let { speedMult: M_h, skillMult: M_p, foodMult: M_f, berryMult } = calcMultipliers(selectedSubs, nature, teamBoost);
 
-    // 实战模式：对充能/递增/神兽应用兑现系数
-    if (useRealistic && (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
-        let coeffKey = calcType === '拉帝欧斯（神兽）' ? '拉帝欧斯（神兽）' : pokemonName;
-        if (REALISTIC_COEFF[coeffKey]) {
-            M_p *= REALISTIC_COEFF[coeffKey];
+    // 实战模式：对技能型/充能/递增/神兽应用兑现系数
+    if (useRealistic) {
+        if (calcType === '技能型') {
+            M_p *= SKILL_TYPE_REALISTIC_COEFF;
+        } else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
+            let coeffKey = calcType === '拉帝欧斯（神兽）' ? '拉帝欧斯（神兽）' : pokemonName;
+            if (REALISTIC_COEFF[coeffKey]) {
+                M_p *= REALISTIC_COEFF[coeffKey];
+            }
         }
     }
 
@@ -384,9 +402,9 @@ function calculate() {
         teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, false);
     }
 
-    // 实战估算值
+    // 实战估算值（仅对支持的类型）
     let realisticSolo = null, realisticTeam = null;
-    if (useRealistic && (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
+    if (useRealistic && (calcType === '技能型' || calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
         realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
         if (hasHelper) {
             realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
@@ -420,7 +438,7 @@ function calculate() {
         }
     }
 
-    // 帮手奖励溢出提示（基于理论帮速）
+    // 帮手奖励溢出提示
     if (hasHelper) {
         let baseSpeed = 0.0;
         if (selectedSubs.includes('帮M')) baseSpeed += 0.14;
