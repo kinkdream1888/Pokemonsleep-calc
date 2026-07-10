@@ -196,10 +196,11 @@ function calculate() {
         pokemonName = pokeSelect.value;
     }
 
-    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, useRealistic);
+    // 理论倍率（永远不打折）
+    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, false);
     let hasHelper = selectedSubs.includes('帮手奖励');
     let teamResult = null;
-    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, useRealistic);
+    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, false);
 
     let lines = [];
     lines.push(`类型: ${calcType}`);
@@ -220,12 +221,14 @@ function calculate() {
     }
 
     if (useRealistic && (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType))) {
+        // 实战估算（打折）
         let realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
+        let realisticTeam = null;
+        if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
         lines.push('');
         lines.push('【实战估算】');
         lines.push(`技能概率倍率 (打折后): ${realisticSolo.M_p}`);
         if (hasHelper) {
-            let realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
             lines.push(`单帮手: ${realisticSolo.total} (${realisticSolo.improve}%)`);
             lines.push(`5帮手: ${realisticTeam.total} (${realisticTeam.improve}%)`);
         } else {
