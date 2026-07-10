@@ -68,6 +68,9 @@
             align-items: center;
             gap: 6px;
         }
+        .checkbox-row input[type="checkbox"] {
+            margin: 0;
+        }
         .announce-btn {
             background: none;
             border: 1px solid #3498db;
@@ -133,7 +136,6 @@
             <option value="能量填充M">能量填充M</option>
             <option value="树果遽增">树果遽增</option>
             <option value="拉帝欧斯（神兽）">拉帝欧斯（神兽）</option>
-            <option value="双修食材型">双修食材型</option>
         </select>
     </div>
 
@@ -154,7 +156,7 @@
 
     <div class="checkbox-row" id="realisticRow">
         <input type="checkbox" id="realisticModeCheckbox">
-        <label for="realisticModeCheckbox">☑️ 实战估算（考虑技能打折）</label>
+        <label for="realisticModeCheckbox">实战估算（考虑技能打折）</label>
     </div>
 
     <button class="btn" onclick="calculate()">计算效率</button>
@@ -165,7 +167,11 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
-    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型（古月鸟、老翁龙），动态计算食材个数与技能次数。', '实战估算系数调整为0.88，更贴近模拟值。', '内置睡眠损耗估算。'] },
+    { version: 'V0.1.4', date: '2026-07-11', notes: [
+        '新增双修食材型（古月鸟、老翁龙），位于食材型子类。',
+        '动态计算食材个数与技能次数，并对比毒骷蛙/隆隆岩/咚咚鼠。',
+        '修复双修食材型无输出问题，修复实战估算复选框图标重复。'
+    ]},
     { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
     { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误。'] },
     { version: 'V0.1.1', date: '2026-07-10', notes: ['修复实战估算未生效，版本号重置。'] },
@@ -197,7 +203,7 @@ const BERRY_BOOST_MONS_DATA = {
 };
 const LATIOS_DATA = { prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78 };
 
-// 双修食材型数据（用于动态计算）
+// 双修食材型（食材型子类，位于下拉菜单“食材型”选项中）
 const HYBRID_FOOD_MONS_DATA = {
     "古月鸟": { 
         interval: 2700,
@@ -219,7 +225,6 @@ const HYBRID_FOOD_MONS_DATA = {
     },
 };
 
-// 专家毕业面板固定值
 const EXPERT_GRAD_DATA = {
     "毒骷蛙": { food: 123.04 },
     "隆隆岩": { food: 164.99 },
@@ -276,6 +281,7 @@ const realisticRow = document.getElementById('realisticRow');
 
 let maxSubs = 3;
 let currentType = '树果型';
+let hybridMode = false; // 是否处于双修食材型子模式
 
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
@@ -303,9 +309,11 @@ function renderSubCheckboxes(showBerryS) {
 
 function onTypeChange() {
     currentType = typeSelect.value;
+    hybridMode = false;
     let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
     renderSubCheckboxes(showBerryS);
 
+    // 显示宝可梦选择框
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -322,33 +330,41 @@ function onTypeChange() {
             opt.value = mon; opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
-    } else if (currentType === '双修食材型') {
+    } else if (currentType === '食材型') {
+        // 食材型包含双修食材型子项
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
+        // 添加普通食材型选项（暂无具体宝可梦，先放双修食材型）
         for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
             let opt = document.createElement('option');
-            opt.value = mon; opt.textContent = mon;
+            opt.value = mon; opt.textContent = mon + ' (双修)';
             pokeSelect.appendChild(opt);
+        }
+        // 默认选择第一个
+        if (Object.keys(HYBRID_FOOD_MONS_DATA).length > 0) {
+            hybridMode = true; // 食材型且选中双修宝可梦
         }
     } else {
         pokeRow.style.display = 'none';
     }
 
+    // 副技能上限与说明
     if (currentType === '树果型') {
         maxSubs = 3;
         subNote.textContent = '※ 默认附带树果S，最多再选3个副技能';
     } else if (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）') {
         maxSubs = 4;
         subNote.textContent = '※ 树果S为可选副技能（占用1个副技能位），最多选4个（含树果S）';
-    } else if (currentType === '双修食材型') {
+    } else if (currentType === '食材型') {
         maxSubs = 4;
-        subNote.textContent = '※ 不附带树果S，最多选4个副技能。动态计算食材与技能次数。';
+        subNote.textContent = '※ 不附带树果S，最多选4个副技能。双修食材型会动态计算食材与技能次数。';
     } else {
         maxSubs = 4;
         subNote.textContent = '※ 最多选择4个副技能';
     }
 
-    if (currentType === '树果型' || currentType === '食材型') {
+    // 实战估算复选框
+    if (currentType === '树果型' || (currentType === '食材型' && !hybridMode)) {
         realisticRow.style.display = 'none';
         realisticCheckbox.checked = false;
     } else {
@@ -412,7 +428,7 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     let { speedMult: M_h, skillMult: M_p, foodMult: M_f, berryMult } = calcMultipliers(selectedSubs, nature, teamBoost);
     if (useRealistic) {
         if (calcType === '技能型') M_p *= SKILL_TYPE_REALISTIC_COEFF;
-        else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '双修食材型') {
+        else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '食材型') {
             let coeff = REALISTIC_COEFF[pokemonName] || DEFAULT_REALISTIC_COEFF;
             M_p *= coeff;
         } else if (calcType === '拉帝欧斯（神兽）') {
@@ -424,16 +440,14 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     if (calcType === '树果型') { total = M_h; improve = (total-1)*100; }
     else if (calcType === '食材型') { total = M_h * M_f; improve = (total-1)*100; }
     else if (calcType === '技能型') { total = M_h * M_p; improve = (total-1)*100; }
-    else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）' || calcType === '双修食材型') {
+    else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
         let dataObj;
         if (calcType === '能量填充M') dataObj = ENERGY_MONS_DATA[pokemonName];
         else if (calcType === '树果遽增') dataObj = BERRY_BOOST_MONS_DATA[pokemonName];
-        else if (calcType === '双修食材型') dataObj = HYBRID_FOOD_MONS_DATA[pokemonName];
         else dataObj = LATIOS_DATA;
         let data = { ...dataObj };
         if (calcType === '能量填充M') data.e_s_is_berry = false;
         else if (calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') data.e_s_is_berry = true;
-        else if (calcType === '双修食材型') data.e_s_is_berry = false;
         let E_base = calculateEnergy(data, 1.0, 1.0, 1.0, 1);
         let E_config = calculateEnergy(data, M_h, M_p, M_f, berryMult);
         total = E_config / E_base;
@@ -474,14 +488,22 @@ function computeHybridOutput(pokemonName, selectedSubs, nature, useRealistic) {
 function calculate() {
     let calcType = typeSelect.value;
     let pokemonName = '';
-    if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '双修食材型') {
+    let isHybrid = false;
+
+    if (calcType === '食材型') {
+        pokemonName = pokeSelect.value;
+        if (pokemonName && HYBRID_FOOD_MONS_DATA[pokemonName]) {
+            isHybrid = true;
+        }
+    } else if (['能量填充M', '树果遽增'].includes(calcType)) {
         pokemonName = pokeSelect.value;
     }
+
     let nature = natureSelect.value;
     let selectedSubs = getSelectedSubs();
     let useRealistic = realisticCheckbox.checked;
 
-    if (calcType === '双修食材型') {
+    if (isHybrid) {
         let out = computeHybridOutput(pokemonName, selectedSubs, nature, useRealistic);
         let mon = HYBRID_FOOD_MONS_DATA[pokemonName];
         let rivalFood = mon.food_rival;
@@ -497,7 +519,7 @@ function calculate() {
         let totalNoSleep = foodRatio + skillRatioNoSleep;
         let totalSleep = foodRatio + skillRatioSleep;
 
-        let output = `类型: 双修食材型 (${pokemonName})\n`;
+        let output = `类型: 食材型 (双修)\n宝可梦: ${pokemonName}\n`;
         output += `副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'}\n`;
         output += `性格: ${nature}\n`;
         output += `帮速倍率 (M_h): ${out.M_h.toFixed(4)}\n`;
@@ -516,6 +538,19 @@ function calculate() {
         output += '\n※ 食材产出不受睡眠影响。技能睡眠损耗系数：古月鸟0.8276，老翁龙0.8402。';
         output += '\n※ 睡眠损耗数据已包含保底。';
         if (useRealistic) output += '\n※ 实战估算已生效，技能概率已打折。';
+    } else if (calcType === '食材型') {
+        // 普通食材型（暂无具体宝可梦，预留逻辑）
+        let { speedMult: M_h, foodMult: M_f } = calcMultipliers(selectedSubs, nature, false);
+        let total = M_h * M_f;
+        let improve = (total - 1) * 100;
+        let output = `类型: 食材型\n`;
+        output += `副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'}\n`;
+        output += `性格: ${nature}\n`;
+        output += `帮速倍率 (M_h): ${M_h.toFixed(4)}\n`;
+        output += `食材概率倍率 (M_f): ${M_f.toFixed(4)}\n`;
+        output += `总倍率: ${total.toFixed(4)} (${improve.toFixed(2)}%)\n`;
+        resultBox.textContent = output;
+        return;
     } else {
         let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, useRealistic);
         let hasHelper = selectedSubs.includes('帮手奖励');
@@ -539,7 +574,7 @@ function calculate() {
             output += `总倍率: ${soloResult.total} (${soloResult.improve}%)\n`;
         }
 
-        if (useRealistic && (calcType === '技能型' || calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
+        if (useRealistic && (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType))) {
             let realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
             output += '\n【实战估算】\n';
             output += `技能概率倍率 (打折后): ${realisticSolo.M_p}\n`;
