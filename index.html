@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝可梦Sleep 效率计算器 V0.1.6</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f5f5f5; 
+            margin: 10px; 
+            display: flex;
+            justify-content: center;
+        }
+        .container { 
+            width: 100%;
+            max-width: 600px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            box-sizing: border-box;
+            position: relative;
+        }
+        h2 { margin-top: 0; color: #2c3e50; font-size: 1.4em; display: flex; align-items: center; gap: 10px; }
+        .note { color: gray; font-size: 0.85em; margin-bottom: 8px; }
+        .row { margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; }
+        .row label { width: 80px; font-weight: bold; font-size: 0.9em; }
+        select, input[type="checkbox"] { margin-right: 5px; }
+        .sub-skills { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 6px; 
+            margin: 6px 0; 
+        }
+        .sub-skills label { 
+            display: flex; 
+            align-items: center; 
+            gap: 3px; 
+            font-size: 0.9em; 
+            white-space: nowrap; 
+        }
+        .btn { 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            width: 100%;
+            max-width: 200px;
+        }
+        .btn:hover { background: #2980b9; }
+        .result { 
+            background: #f9f9f9; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-top: 12px; 
+            white-space: pre-wrap; 
+            font-size: 0.9em; 
+            word-break: break-word;
+        }
+        .checkbox-row { 
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .checkbox-row input[type="checkbox"] {
+            margin: 0;
+        }
+        .announce-btn {
+            background: none;
+            border: 1px solid #3498db;
+            color: #3498db;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .announce-btn:hover { background: #eaf2f8; }
+        .announce-panel {
+            position: absolute;
+            top: 50px;
+            left: 15px;
+            right: 15px;
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 12px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            font-size: 0.85em;
+        }
+        .announce-panel h4 {
+            margin: 0 0 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .announce-close {
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+        .announce-close:hover { color: #333; }
+        .announce-panel ul { margin: 0; padding-left: 20px; }
+        .announce-panel li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>
+        宝可梦Sleep 效率计算器 <small>V0.1.6</small>
+        <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
+    </h2>
+    <div class="announce-panel" id="announcePanel">
+        <h4>
+            更新公告
+            <span class="announce-close" onclick="toggleAnnounce()">✖</span>
+        </h4>
+        <ul id="announceList"></ul>
+    </div>
+    <div class="note">※ 宝可梦默认等级：70级（效率比与等级无关）</div>
+
+    <div class="row">
+        <label>选择类型:</label>
+        <select id="typeSelect">
+            <option value="树果型">树果型</option>
+            <option value="食材型">食材型</option>
+            <option value="技能型">技能型</option>
+            <option value="能量填充M">能量填充M</option>
+            <option value="树果遽增">树果遽增</option>
+            <option value="拉帝欧斯（神兽）">拉帝欧斯（神兽）</option>
+        </select>
+    </div>
+
+    <div class="row" id="pokeRow" style="display:none;">
+        <label>选择宝可梦:</label>
+        <select id="pokeSelect"></select>
+    </div>
+
+    <div class="note" id="subNote">※ 默认附带树果S，最多再选3个副技能</div>
+
+    <div class="row"><label>副技能:</label></div>
+    <div class="sub-skills" id="subCheckboxes"></div>
+
+    <div class="row">
+        <label>选择性格:</label>
+        <select id="natureSelect"></select>
+    </div>
+
+    <div class="checkbox-row" id="realisticRow">
+        <input type="checkbox" id="realisticModeCheckbox">
+        <label for="realisticModeCheckbox">实战估算（考虑技能打折）</label>
+    </div>
+
+    <button class="btn" onclick="calculate()">计算效率</button>
+
+    <div class="result" id="resultBox"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="calculator.js"></script>
+<script>
+// ========== 更新日志 ==========
+const UPDATE_LOG = [
+    { version: 'V0.1.6', date: '2026-07-11', notes: ['代码拆分，彻底修复实战估算损耗计算失效问题。'] },
+    { version: 'V0.1.5', date: '2026-07-11', notes: ['修复技能型、能量填充M、树果遽增、拉帝欧斯实战估算无效。'] },
+    { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算选项显示逻辑。'] },
+    { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型新增综合强度说明，对照组面板增加描述。'] },
+    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型（古月鸟、老翁龙）。'] },
+    { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
+    { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误。'] },
+    { version: 'V0.1.1', date: '2026-07-10', notes: ['修复实战估算未生效。'] },
+];
+
+const announceList = document.getElementById('announceList');
+UPDATE_LOG.forEach(log => {
+    let li = document.createElement('li');
+    li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
+    announceList.appendChild(li);
+});
+
+function toggleAnnounce() {
+    const panel = document.getElementById('announcePanel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+// ========== 界面逻辑 ==========
+const typeSelect = document.getElementById('typeSelect');
+const pokeRow = document.getElementById('pokeRow');
+const pokeSelect = document.getElementById('pokeSelect');
+const subNote = document.getElementById('subNote');
+const subCheckboxes = document.getElementById('subCheckboxes');
+const natureSelect = document.getElementById('natureSelect');
+const resultBox = document.getElementById('resultBox');
+const realisticCheckbox = document.getElementById('realisticModeCheckbox');
+const realisticRow = document.getElementById('realisticRow');
+
+let maxSubs = 3;
+let currentType = '树果型';
+
+for (let nature of Object.keys(NATURES)) {
+    let opt = document.createElement('option');
+    opt.value = nature;
+    opt.textContent = nature;
+    natureSelect.appendChild(opt);
+}
+natureSelect.value = '坦率';
+
+function renderSubCheckboxes(showBerryS) {
+    subCheckboxes.innerHTML = '';
+    for (let name in SUB_SKILLS) {
+        if (name === '树果S' && !showBerryS) continue;
+        let label = document.createElement('label');
+        let cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = name;
+        cb.id = 'sub_' + name;
+        cb.addEventListener('change', onSubChange);
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(name));
+        subCheckboxes.appendChild(label);
+    }
+}
+
+function updateRealisticVisibility() {
+    let calcType = typeSelect.value;
+    let show = false;
+    if (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType)) {
+        show = true;
+    } else if (calcType === '食材型') {
+        let poke = pokeSelect.value;
+        if (poke && HYBRID_FOOD_MONS_DATA[poke]) {
+            show = true;
+        }
+    }
+    if (show) {
+        realisticRow.style.display = 'flex';
+    } else {
+        realisticRow.style.display = 'none';
+        realisticCheckbox.checked = false;
+    }
+}
+
+function onTypeChange() {
+    currentType = typeSelect.value;
+    let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
+    renderSubCheckboxes(showBerryS);
+
+    if (currentType === '能量填充M') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(ENERGY_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon; opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+    } else if (currentType === '树果遽增') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(BERRY_BOOST_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon; opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+    } else if (currentType === '食材型') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        let optDefault = document.createElement('option');
+        optDefault.value = '__other__';
+        optDefault.textContent = '其他宝可梦';
+        pokeSelect.appendChild(optDefault);
+        for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon + ' (双修)';
+            pokeSelect.appendChild(opt);
+        }
+        pokeSelect.value = '__other__';
+    } else {
+        pokeRow.style.display = 'none';
+    }
+
+    if (currentType === '树果型') {
+        maxSubs = 3;
+        subNote.textContent = '※ 默认附带树果S，最多再选3个副技能';
+    } else if (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）') {
+        maxSubs = 4;
+        subNote.textContent = '※ 树果S为可选副技能（占用1个副技能位），最多选4个（含树果S）';
+    } else if (currentType === '食材型') {
+        maxSubs = 4;
+        subNote.textContent = '※ 不附带树果S，最多选4个副技能。双修宝可梦可与专家对比。';
+    } else {
+        maxSubs = 4;
+        subNote.textContent = '※ 最多选择4个副技能';
+    }
+
+    updateRealisticVisibility();
+    enforceSubLimit();
+    resultBox.textContent = '';
+}
+
+pokeSelect.addEventListener('change', () => {
+    updateRealisticVisibility();
+});
+
+function onSubChange() { enforceSubLimit(); }
+
+function enforceSubLimit() {
+    let checked = getSelectedSubs();
+    if (checked.length > maxSubs) {
+        let last = checked[checked.length-1];
+        document.getElementById('sub_' + last).checked = false;
+        alert(`当前类型最多选择${maxSubs}个副技能！`);
+    }
+}
+
+function getSelectedSubs() {
+    let subs = [];
+    let checkboxes = subCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
+    checkboxes.forEach(cb => subs.push(cb.value));
+    return subs;
+}
+
+typeSelect.addEventListener('change', onTypeChange);
+renderSubCheckboxes(false);
+onTypeChange();
+</script>
+</body>
+</html>
