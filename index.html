@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V1.7</title>
+    <title>宝可梦Sleep 效率计算器 V1.8 实战版</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -61,11 +61,17 @@
             font-size: 0.9em; 
             word-break: break-word;
         }
+        .checkbox-row { 
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>宝可梦Sleep 效率计算器 <small>V1.7</small></h2>
+    <h2>宝可梦Sleep 效率计算器 <small>V1.8 实战版</small></h2>
     <div class="note">※ 宝可梦默认等级：70级（效率比与等级无关）</div>
 
     <div class="row">
@@ -95,6 +101,11 @@
         <select id="natureSelect"></select>
     </div>
 
+    <div class="checkbox-row">
+        <input type="checkbox" id="realisticModeCheckbox">
+        <label for="realisticModeCheckbox">☑️ 实战估算（考虑技能打折）</label>
+    </div>
+
     <button class="btn" onclick="calculate()">计算效率</button>
 
     <div class="result" id="resultBox"></div>
@@ -114,6 +125,18 @@ const BERRY_BOOST_MONS_DATA = {
     "谜拟Q":   { prob_f: 0.153, e_f: 105.4, prob_s: 0.035, e_b: 143, e_s: 50 },
 };
 const LATIOS_DATA = { prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78 };
+
+// 兑现系数：基础技能概率 -> 系数
+const REALISTIC_COEFF = {
+    "电龙": 0.92,
+    "树才怪": 0.90,
+    "太阳伊布": 0.92,
+    "音波龙": 0.92,
+    "蜥蜴王": 0.95,
+    "勇士雄鹰": 0.94,
+    "谜拟Q": 0.94,
+    "拉帝欧斯（神兽）": 0.93,
+};
 
 const SUB_SKILLS = {
     "帮M":    { speed: 0.14, skill: 1.0, food: 1.0, berry: 1 },
@@ -151,6 +174,7 @@ const subNote = document.getElementById('subNote');
 const subCheckboxes = document.getElementById('subCheckboxes');
 const natureSelect = document.getElementById('natureSelect');
 const resultBox = document.getElementById('resultBox');
+const realisticCheckbox = document.getElementById('realisticModeCheckbox');
 
 let maxSubs = 3;
 let currentType = '树果型';
@@ -183,7 +207,6 @@ function renderSubCheckboxes(showBerryS) {
 
 function onTypeChange() {
     currentType = typeSelect.value;
-    // 能量填充M、树果遽增、拉帝欧斯（神兽）显示树果S
     let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
     renderSubCheckboxes(showBerryS);
 
@@ -209,7 +232,6 @@ function onTypeChange() {
         pokeRow.style.display = 'none';
     }
 
-    // 副技能上限与说明
     if (currentType === '树果型') {
         maxSubs = 3;
         subNote.textContent = '※ 默认附带树果S，最多再选3个副技能';
@@ -291,8 +313,16 @@ function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
     return M_h * (berryPart + foodPart + skillPart);
 }
 
-function compute(calcType, pokemonName, selectedSubs, nature, teamBoost) {
+function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useRealistic) {
     let { speedMult: M_h, skillMult: M_p, foodMult: M_f, berryMult } = calcMultipliers(selectedSubs, nature, teamBoost);
+
+    // 实战模式：对充能/递增/神兽应用兑现系数
+    if (useRealistic && (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
+        let coeffKey = calcType === '拉帝欧斯（神兽）' ? '拉帝欧斯（神兽）' : pokemonName;
+        if (REALISTIC_COEFF[coeffKey]) {
+            M_p *= REALISTIC_COEFF[coeffKey];
+        }
+    }
 
     let total, improve;
     if (calcType === '树果型') {
@@ -314,19 +344,16 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost) {
             dataObj = LATIOS_DATA;
         }
         let data = { ...dataObj };
-        // 拉帝欧斯技能是树果个数，其他宝可梦是直接能量值
         if (calcType === '拉帝欧斯（神兽）') {
             data.e_s_is_berry = true;
         } else {
             data.e_s_is_berry = false;
         }
-        // 基准：纯白板（berry_mult=1, M_h=1, M_p=1, M_f=1）
         let E_base = calculateEnergy(data, 1.0, 1.0, 1.0, 1);
         let E_config = calculateEnergy(data, M_h, M_p, M_f, berryMult);
         total = E_config / E_base;
         improve = (total - 1) * 100;
     } else {
-        // 不应该进入这里
         total = 1;
         improve = 0;
     }
@@ -347,12 +374,23 @@ function calculate() {
     }
     let nature = natureSelect.value;
     let selectedSubs = getSelectedSubs();
+    let useRealistic = realisticCheckbox.checked;
 
-    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false);
+    // 理论值
+    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, false);
     let hasHelper = selectedSubs.includes('帮手奖励');
     let teamResult = null;
     if (hasHelper) {
-        teamResult = compute(calcType, pokemonName, selectedSubs, nature, true);
+        teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, false);
+    }
+
+    // 实战估算值
+    let realisticSolo = null, realisticTeam = null;
+    if (useRealistic && (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
+        realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
+        if (hasHelper) {
+            realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
+        }
     }
 
     let output = `类型: ${calcType}`;
@@ -362,49 +400,58 @@ function calculate() {
     output += `性格: ${nature}\n`;
     output += `帮速倍率 (M_h): ${soloResult.M_h}\n`;
     output += `技能概率倍率 (M_p): ${soloResult.M_p}\n`;
-    output += `食材概率倍率 (M_f): ${soloResult.M_f}\n`;
+    output += `食材概率倍率 (M_f): ${soloResult.M_f}\n\n`;
 
+    output += '【理论倍率】\n';
     if (hasHelper) {
-        output += '\n【单帮手奖励】\n';
-        output += `总倍率: ${soloResult.total}\n`;
-        output += `提升: ${soloResult.improve}%\n`;
-        output += '\n【5帮手奖励(团队25%帮速)】\n';
-        output += `帮速倍率 (M_h_team): ${teamResult.M_h}\n`;
-        output += `总倍率: ${teamResult.total}\n`;
-        output += `提升: ${teamResult.improve}%\n`;
+        output += `单帮手: ${soloResult.total} (${soloResult.improve}%)\n`;
+        output += `5帮手: ${teamResult.total} (${teamResult.improve}%)\n`;
+    } else {
+        output += `总倍率: ${soloResult.total} (${soloResult.improve}%)\n`;
+    }
 
+    if (realisticSolo) {
+        output += '\n【实战估算】\n';
+        if (hasHelper) {
+            output += `单帮手: ${realisticSolo.total} (${realisticSolo.improve}%)\n`;
+            output += `5帮手: ${realisticTeam.total} (${realisticTeam.improve}%)\n`;
+        } else {
+            output += `总倍率: ${realisticSolo.total} (${realisticSolo.improve}%)\n`;
+        }
+    }
+
+    // 帮手奖励溢出提示（基于理论帮速）
+    if (hasHelper) {
         let baseSpeed = 0.0;
         if (selectedSubs.includes('帮M')) baseSpeed += 0.14;
         if (selectedSubs.includes('帮S')) baseSpeed += 0.07;
         let remaining = MAX_SUB_SPEED - baseSpeed;
         let maxHelpers = Math.floor(remaining / 0.05);
+        output += '\n※ 帮手奖励团队溢出分析：';
         if (maxHelpers >= 5) {
-            output += '\n※ 当前配置即使5个帮手奖励也不会溢出35%帮速上限';
+            output += '即使5个帮手奖励也不会溢出35%上限。';
         } else {
             let overflow5 = (baseSpeed + 0.25) - MAX_SUB_SPEED;
             if (overflow5 > 0) {
-                output += `\n※ 当前配置5个帮手奖励将溢出${(overflow5*100).toFixed(1)}%帮速（超出${maxHelpers}个后将会溢出）`;
+                output += `5个帮手奖励将溢出${(overflow5*100).toFixed(1)}%帮速（超出${maxHelpers}个后溢出）。`;
             } else {
-                output += `\n※ 当前配置5个帮手奖励未溢出`;
+                output += `5个帮手奖励未溢出。`;
             }
         }
-    } else {
-        output += `总倍率: ${soloResult.total}\n`;
-        output += `提升: ${soloResult.improve}%\n`;
     }
 
     if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
-        output += '\n※ 技能就绪待机可能导致实际能量比理论值低约2~4%';
-        output += '\n※ 基准为纯白板（无树果S），树果S为可选副技能';
+        output += '\n※ 基准为纯白板（无树果S），树果S为可选副技能。';
+        output += '\n※ 技能就绪待机可能导致实际能量比理论值低约2~4%。';
     }
     if (calcType === '技能型') {
-        output += '\n※ 技能就绪待机可能导致实际技能次数略低于理论值';
+        output += '\n※ 技能就绪待机可能导致实际技能次数略低于理论值。';
     }
     if (['能量填充M', '树果遽增', '拉帝欧斯（神兽）', '技能型'].includes(calcType)) {
-        output += '\n※ 睡眠期间技能若无人收取，实际产出可能低于理论值';
+        output += '\n※ 睡眠期间技能若无人收取，实际产出可能低于理论值。';
     }
     if (calcType === '拉帝欧斯（神兽）') {
-        output += '\n※ 神兽：技能受同属性队友影响，计算基于最大加成（78树果）';
+        output += '\n※ 神兽：技能受同属性队友影响，计算基于最大加成（78树果）。';
     }
 
     resultBox.textContent = output;
