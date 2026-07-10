@@ -240,9 +240,9 @@ function calculate() {
 
     if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
         lines.push('※ 基准为纯白板（无树果S），树果S为可选副技能。');
-        lines.push('※ 技能就绪待机可能导致实际能量比理论值低约2~4%。');
+        lines.push('※ 技能就绪待机损耗可能导致实际能量比理论值低约2~4%。');
     }
-    if (calcType === '技能型') lines.push('※ 技能就绪待机可能导致实际技能次数略低于理论值。');
+    if (calcType === '技能型') lines.push('※ 技能就绪待机损耗可能导致实际能量比理论值低约2~4%。');
     if (['能量填充M', '树果遽增', '拉帝欧斯（神兽）', '技能型'].includes(calcType))
         lines.push('※ 睡眠期间技能若无人收取，实际产出可能低于理论值。');
     if (calcType === '拉帝欧斯（神兽）')
