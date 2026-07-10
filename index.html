@@ -28,7 +28,7 @@
         }
         .container { 
             width: 100%;
-            max-width: 600px; 
+            max-width: 700px; 
             background: white; 
             padding: 15px; 
             border-radius: 10px; 
@@ -37,7 +37,26 @@
             position: relative;
             border-top: 4px solid #e74c3c;
         }
-        h2 { margin-top: 0; color: #2c3e50; font-size: 1.4em; display: flex; align-items: center; gap: 10px; }
+h2 {
+    margin-top: 0;
+    color: #2c3e50;
+    font-size: clamp(1em, 4.5vw, 1.4em);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;          /* 允许在窄屏时换行，但标题文本是整体，不会内部断开 */
+}
+                .title-text {
+            white-space: nowrap;      /* 内部不换行 */
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        h2 small {
+            font-size: 0.75em;
+            flex-shrink: 0;
+            margin-left: auto;        /* 版本号靠右 */
+        }
         /* 精灵球 CSS 图标 */
         .pokeball-icon {
             display: inline-block;
@@ -137,6 +156,8 @@
             font-size: 0.8em;
             cursor: pointer;
             white-space: nowrap;
+            flex-shrink: 0;           /* 新增：防止被挤压 */
+            margin-left: 4px;         /* 新增：与版本号保持间距 */
         }
         .announce-btn:hover { background: #eaf2f8; }
         .announce-panel {
@@ -180,10 +201,7 @@
 <div class="container">
 <h2>
     <span class="pokeball-icon"></span>
-    <span class="title-text">
-        <span class="title-line1">宝可梦Sleep</span>
-        <span class="title-line2">效率计算器</span>
-    </span>
+    <span class="title-text">宝可梦Sleep&nbsp;效率计算器</span>
     <small>V0.1.4</small>
     <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
 </h2>
