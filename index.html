@@ -37,21 +37,20 @@
             position: relative;
             border-top: 4px solid #e74c3c;
         }
-h2 {
-    margin-top: 0;
-    color: #2c3e50;
-    font-size: clamp(1em, 4.5vw, 1.4em);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;          /* 允许在窄屏时换行，但标题文本是整体，不会内部断开 */
-}
-                .title-text {
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: clamp(1em, 4.5vw, 1.4em);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .title-text {
             white-space: nowrap;      /* 内部不换行 */
             flex: 1 1 auto;
             min-width: 0;
         }
-
         h2 small {
             font-size: 0.75em;
             flex-shrink: 0;
@@ -68,8 +67,8 @@ h2 {
             border: 3px solid #2c3e50;
             box-sizing: border-box;
             animation: breathe 2s ease-in-out infinite;
-            flex-shrink: 0;           /* 防止被压缩变形 */
-            aspect-ratio: 1 / 1;     /* 强制保持 1:1 圆形 */
+            flex-shrink: 0;
+            aspect-ratio: 1 / 1;
         }
         .pokeball-icon::after {
             content: '';
@@ -156,8 +155,8 @@ h2 {
             font-size: 0.8em;
             cursor: pointer;
             white-space: nowrap;
-            flex-shrink: 0;           /* 新增：防止被挤压 */
-            margin-left: 4px;         /* 新增：与版本号保持间距 */
+            flex-shrink: 0;
+            margin-left: 4px;
         }
         .announce-btn:hover { background: #eaf2f8; }
         .announce-panel {
@@ -187,24 +186,16 @@ h2 {
         }
         .announce-panel ul { margin: 0; padding-left: 20px; }
         .announce-panel li { margin-bottom: 4px; }
-        .title-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.3;
-        }
-        .title-line2 {
-            white-space: nowrap;
-        }
     </style>
 </head>
 <body>
 <div class="container">
-<h2>
-    <span class="pokeball-icon"></span>
-    <span class="title-text">宝可梦Sleep&nbsp;效率计算器</span>
-    <small>V0.1.4</small>
-    <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
-</h2>
+    <h2>
+        <span class="pokeball-icon"></span>
+        <span class="title-text">宝可梦Sleep&nbsp;效率计算器</span>
+        <small>V0.1.4</small>
+        <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
+    </h2>
     <div class="announce-panel" id="announcePanel">
         <h4>
             更新公告
@@ -256,16 +247,15 @@ h2 {
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.4.8', date: '2026-07-11', notes: ['界面优化：修复手机端标题换行问题，去除重复CSS。'] },
     { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：增加精灵球图标与纯色背景。右下角新增精灵球水印，修复手机端精灵球变形。'] },
-    { version: 'V0.1.4.6', date: '2026-07-11', notes: [
-    '优化技能就绪待机损耗提示，统一为“损耗可能导致实际能量/次数低于理论值约2~4%”。'
-]},
+    { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化技能就绪待机损耗提示，统一为“损耗可能导致实际能量/次数低于理论值约2~4%”。'] },
     { version: 'V0.1.4.5', date: '2026-07-11', notes: ['彻底修复实战估算损耗计算失效（理论倍率与实战估算分离）。'] },
     { version: 'V0.1.4.4', date: '2026-07-11', notes: ['再次修复实战估算损耗计算失效。'] },
     { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复技能型、能量填充M、树果遽增、拉帝欧斯实战估算无效。'] },
     { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算选项显示逻辑。'] },
     { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型新增综合强度说明，对照组面板增加详细描述。'] },
-    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食月材型（古鸟、老翁龙）。'] },
+    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型（古月鸟、老翁龙）。'] },
     { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
     { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误。'] },
     { version: 'V0.1.1', date: '2026-07-10', notes: ['修复实战估算未生效。'] },
