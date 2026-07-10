@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V0.1.4.1</title>
+    <title>宝可梦Sleep 效率计算器 V0.1.4.2</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -115,7 +115,7 @@
 <body>
 <div class="container">
     <h2>
-        宝可梦Sleep 效率计算器 <small>V0.1.4.1</small>
+        宝可梦Sleep 效率计算器 <small>V0.1.4.2</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -167,9 +167,13 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.4.2', date: '2026-07-11', notes: [
+        '修复“其他食材型”错误显示实战估算选项的问题。',
+        '实战估算现仅对技能型、双修食材型、能量填充M、树果遽增、拉帝欧斯显示。'
+    ]},
     { version: 'V0.1.4.1', date: '2026-07-11', notes: [
         '双修食材型结果新增综合强度含义说明。',
-        '对照专家面板增加配置描述（帮M+食概M+性格帮等）。',
+        '对照组宝可梦面板增加配置描述。',
         '修复普通食材型帮手奖励团队倍率缺失问题。',
         '版本号细分。'
     ]},
@@ -300,6 +304,26 @@ function renderSubCheckboxes(showBerryS) {
     }
 }
 
+// 更新实战估算显示状态
+function updateRealisticVisibility() {
+    let calcType = typeSelect.value;
+    let show = false;
+    if (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType)) {
+        show = true;
+    } else if (calcType === '食材型') {
+        let poke = pokeSelect.value;
+        if (poke && HYBRID_FOOD_MONS_DATA[poke]) {
+            show = true;
+        }
+    }
+    if (show) {
+        realisticRow.style.display = 'flex';
+    } else {
+        realisticRow.style.display = 'none';
+        realisticCheckbox.checked = false;
+    }
+}
+
 function onTypeChange() {
     currentType = typeSelect.value;
     let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
@@ -353,16 +377,15 @@ function onTypeChange() {
         subNote.textContent = '※ 最多选择4个副技能';
     }
 
-    if (currentType === '树果型') {
-        realisticRow.style.display = 'none';
-        realisticCheckbox.checked = false;
-    } else {
-        realisticRow.style.display = 'flex';
-    }
-
+    updateRealisticVisibility();
     enforceSubLimit();
     resultBox.textContent = '';
 }
+
+// 监听宝可梦切换，同步更新实战估算
+pokeSelect.addEventListener('change', () => {
+    updateRealisticVisibility();
+});
 
 function onSubChange() { enforceSubLimit(); }
 
@@ -412,7 +435,8 @@ function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
     let skillPart = data.prob_s * M_p * skillEnergy;
     return M_h * (berryPart + foodPart + skillPart);
 }
-    function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useRealistic) {
+
+function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useRealistic) {
     let { speedMult: M_h, skillMult: M_p, foodMult: M_f, berryMult } = calcMultipliers(selectedSubs, nature, teamBoost);
     if (useRealistic) {
         if (calcType === '技能型') M_p *= SKILL_TYPE_REALISTIC_COEFF;
