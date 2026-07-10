@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V1.9</title>
+    <title>宝可梦Sleep 效率计算器 V0.1.1</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -71,7 +71,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>宝可梦Sleep 效率计算器 <small>V1.9</small></h2>
+    <h2>宝可梦Sleep 效率计算器 <small>V0.1.1</small></h2>
     <div class="note">※ 宝可梦默认等级：70级（效率比与等级无关）</div>
 
     <div class="row">
@@ -137,8 +137,9 @@ const REALISTIC_COEFF = {
     "谜拟Q": 0.94,
     "拉帝欧斯（神兽）": 0.93,
 };
+const DEFAULT_REALISTIC_COEFF = 0.92;  // 未知宝可梦的默认系数
 
-// 技能型通用兑现系数（无具体宝可梦，取平均值）
+// 技能型通用兑现系数
 const SKILL_TYPE_REALISTIC_COEFF = 0.90;
 
 const SUB_SKILLS = {
@@ -169,7 +170,7 @@ const NATURES = {
     "温和":  { speed: 1/1.075, skill: 1.2, food: 1.0 },
 };
 
-// ========== 界面更新逻辑 ==========
+// ========== 界面逻辑 ==========
 const typeSelect = document.getElementById('typeSelect');
 const pokeRow = document.getElementById('pokeRow');
 const pokeSelect = document.getElementById('pokeSelect');
@@ -183,7 +184,7 @@ const realisticRow = document.getElementById('realisticRow');
 let maxSubs = 3;
 let currentType = '树果型';
 
-// 初始化性格下拉
+// 初始化性格
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
     opt.value = nature;
@@ -192,7 +193,7 @@ for (let nature of Object.keys(NATURES)) {
 }
 natureSelect.value = '坦率';
 
-// 初始化副技能复选框
+// 渲染副技能复选框
 function renderSubCheckboxes(showBerryS) {
     subCheckboxes.innerHTML = '';
     for (let name in SUB_SKILLS) {
@@ -214,7 +215,6 @@ function onTypeChange() {
     let showBerryS = (currentType === '能量填充M' || currentType === '树果遽增' || currentType === '拉帝欧斯（神兽）');
     renderSubCheckboxes(showBerryS);
 
-    // 宝可梦选择框
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -249,7 +249,7 @@ function onTypeChange() {
         subNote.textContent = '※ 最多选择4个副技能';
     }
 
-    // 控制实战估算复选框的显示
+    // 显示/隐藏实战估算复选框
     if (currentType === '树果型' || currentType === '食材型') {
         realisticRow.style.display = 'none';
         realisticCheckbox.checked = false;
@@ -330,15 +330,16 @@ function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
 function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useRealistic) {
     let { speedMult: M_h, skillMult: M_p, foodMult: M_f, berryMult } = calcMultipliers(selectedSubs, nature, teamBoost);
 
-    // 实战模式：对技能型/充能/递增/神兽应用兑现系数
+    // 实战估算：对技能型、能量填充M、树果遽增、拉帝欧斯应用兑现系数
     if (useRealistic) {
         if (calcType === '技能型') {
             M_p *= SKILL_TYPE_REALISTIC_COEFF;
-        } else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
-            let coeffKey = calcType === '拉帝欧斯（神兽）' ? '拉帝欧斯（神兽）' : pokemonName;
-            if (REALISTIC_COEFF[coeffKey]) {
-                M_p *= REALISTIC_COEFF[coeffKey];
-            }
+        } else if (calcType === '能量填充M' || calcType === '树果遽增') {
+            let coeff = REALISTIC_COEFF[pokemonName] || DEFAULT_REALISTIC_COEFF;
+            M_p *= coeff;
+        } else if (calcType === '拉帝欧斯（神兽）') {
+            let coeff = REALISTIC_COEFF['拉帝欧斯（神兽）'] || DEFAULT_REALISTIC_COEFF;
+            M_p *= coeff;
         }
     }
 
@@ -379,7 +380,7 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
         total: total.toFixed(4),
         improve: improve.toFixed(2),
         M_h: M_h.toFixed(4),
-        M_p: M_p.toFixed(4),
+        M_p: M_p.toFixed(4),   // 已经包含打折后的技能概率倍率
         M_f: M_f.toFixed(4),
     };
 }
@@ -402,7 +403,7 @@ function calculate() {
         teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, false);
     }
 
-    // 实战估算值（仅对支持的类型）
+    // 实战估算值
     let realisticSolo = null, realisticTeam = null;
     if (useRealistic && (calcType === '技能型' || calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）')) {
         realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
@@ -430,6 +431,7 @@ function calculate() {
 
     if (realisticSolo) {
         output += '\n【实战估算】\n';
+        output += `技能概率倍率 (打折后): ${realisticSolo.M_p}\n`;
         if (hasHelper) {
             output += `单帮手: ${realisticSolo.total} (${realisticSolo.improve}%)\n`;
             output += `5帮手: ${realisticTeam.total} (${realisticTeam.improve}%)\n`;
@@ -475,7 +477,7 @@ function calculate() {
     resultBox.textContent = output;
 }
 
-// 初始化事件
+// 初始化
 typeSelect.addEventListener('change', onTypeChange);
 renderSubCheckboxes(false);
 onTypeChange();
