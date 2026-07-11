@@ -242,6 +242,25 @@
             cursor: pointer;
             margin-top: 5px;
         }
+        .prob-btn {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .prob-btn:hover { background: #d35400; }
+        .prob-result {
+            background: #fff9e6;
+            border: 1px solid #f39c12;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -249,7 +268,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.5.2.1</small>
+        <small>V0.1.6</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -299,6 +318,19 @@
 
     <div class="result" id="resultBox"></div>
 
+    <!-- 捕捉概率区域 -->
+    <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button class="prob-btn" onclick="calculateProbability()">🎲 计算捕捉概率</button>
+        <select id="lockGold" style="width: 100px;">
+            <option value="0">锁0金</option>
+            <option value="1">锁1金</option>
+            <option value="2">锁2金</option>
+            <option value="3">锁3金</option>
+        </select>
+        <span style="font-size: 0.8em; color: gray;">锁金数</span>
+    </div>
+    <div class="prob-result" id="probResult"></div>
+
     <div class="history-panel" id="historyPanel">
         <b>📋 已保存的结果对比</b>
         <div id="historyList"></div>
@@ -311,23 +343,20 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
-    { version: 'V0.1.5.2.1', date: '2026-07-12', notes: ['修复从幻兽类型切换到其他类型时性格被错误锁定的问题。'] },
+    { version: 'V0.1.6', date: '2026-07-12', notes: [
+        '新增捕捉概率计算功能，支持锁金机制和食材AAA加权。',
+        '技能型新增穿山王、岩殿居蟹（食材精选S），数据待补全。',
+        '技能型可下拉选择特殊宝可梦，显示技能标签。'
+    ]},
+    { version: 'V0.1.5.2.1', date: '2026-07-12', notes: ['修复幻兽类型切换后性格锁定问题。'] },
     { version: 'V0.1.5.2', date: '2026-07-12', notes: [
-        '界面优化：选择宝可梦时右侧动态显示技能标签，选项文字精简。',
-        '幻兽类型锁定性格为坦率。',
-        '食材型说明文字更新。'
+        '界面优化：动态技能标签，选项精简。',
+        '幻兽锁定坦率。'
     ]},
-    { version: 'V0.1.5.1', date: '2026-07-12', notes: [
-        '修正树果型树果S倍率（1.5）。',
-        '拉帝欧斯显示名称添加“流星群（树果遽增）”。',
-        '新增克雷色利亚、达克莱伊（数据待补全）。'
-    ]},
-    { version: 'V0.1.5', date: '2026-07-12', notes: [
-        '树果型基准改为纯白板，树果S成为可选副技能。',
-        '新增“传说宝可梦”类型，拉帝欧斯移入此分类。'
-    ]},
+    { version: 'V0.1.5.1', date: '2026-07-12', notes: ['修正树果S倍率，新增克雷色利亚、达克莱伊。'] },
+    { version: 'V0.1.5', date: '2026-07-12', notes: ['树果型基准纯白板，新增传说宝可梦类型。'] },
     { version: 'V0.1.4.11', date: '2026-07-11', notes: ['新增结果保存与对比功能。'] },
-    { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能/食材概率副技能叠加错误。'] },
+    { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能/食材概率叠加错误。'] },
     { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出结果，高亮关键数据。'] },
     { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化，修复精灵球变形。'] },
     { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：增加精灵球图标与背景。'] },
@@ -419,14 +448,24 @@ function updateSkillTag() {
     let calcType = typeSelect.value;
     let pokeValue = pokeSelect.value;
     skillTag.style.display = 'none';
+    // 食材型双修
     if (calcType === '食材型' && pokeValue && HYBRID_FOOD_MONS_DATA[pokeValue] && HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel) {
         skillTag.textContent = HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
-    } else if (calcType === '传说宝可梦' && pokeValue && LEGENDARY_MONS_DATA[pokeValue] && LEGENDARY_MONS_DATA[pokeValue].skillLabel) {
+    }
+    // 传说宝可梦
+    else if (calcType === '传说宝可梦' && pokeValue && LEGENDARY_MONS_DATA[pokeValue] && LEGENDARY_MONS_DATA[pokeValue].skillLabel) {
         skillTag.textContent = LEGENDARY_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
-    } else if (calcType === '幻兽' && pokeValue && PHANTOM_MONS_DATA[pokeValue] && PHANTOM_MONS_DATA[pokeValue].skillLabel) {
+    }
+    // 幻兽
+    else if (calcType === '幻兽' && pokeValue && PHANTOM_MONS_DATA[pokeValue] && PHANTOM_MONS_DATA[pokeValue].skillLabel) {
         skillTag.textContent = PHANTOM_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    }
+    // 技能型特殊宝可梦
+    else if (calcType === '技能型' && pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue] && SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
     }
 }
@@ -474,7 +513,6 @@ function onTypeChange() {
             opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
-        // 锁定性格为坦率
         natureSelect.value = '坦率';
         natureSelect.disabled = true;
     } else if (currentType === '食材型') {
@@ -492,8 +530,22 @@ function onTypeChange() {
         }
         pokeSelect.value = '__other__';
         natureSelect.disabled = false;
+    } else if (currentType === '技能型') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        let optDefault = document.createElement('option');
+        optDefault.value = '__other__';
+        optDefault.textContent = '其他宝可梦';
+        pokeSelect.appendChild(optDefault);
+        for (let mon of Object.keys(SPECIAL_SKILL_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        pokeSelect.value = '__other__';
+        natureSelect.disabled = false;
     } else {
-        // 树果型、技能型
         pokeRow.style.display = 'none';
         natureSelect.disabled = false;
     }
@@ -557,7 +609,7 @@ function addSaveButton() {
         if (!content.trim()) return;
         let typeLabel = typeSelect.value;
         let poke = '';
-        if (['能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(typeLabel) || (typeLabel === '食材型' && pokeSelect.value !== '__other__')) {
+        if (['能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(typeLabel) || (typeLabel === '食材型' && pokeSelect.value !== '__other__') || (typeLabel === '技能型' && pokeSelect.value !== '__other__')) {
             poke = pokeSelect.options[pokeSelect.selectedIndex].text + ' ';
         }
         let subs = getSelectedSubs().join(',') || '无';
