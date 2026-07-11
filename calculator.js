@@ -51,7 +51,6 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     }
     let total, improve;
     if (calcType === '树果型') {
-        // 基础2果，树果S变为3果，倍率1.5
         let berryBoost = selectedSubs.includes('树果S') ? 1.5 : 1.0;
         total = M_h * berryBoost;
         improve = (total - 1) * 100;
@@ -73,11 +72,9 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
         }
         
         let data = { ...dataObj };
-        // 设定技能能量计算方式
         if (calcType === '能量填充M') data.e_s_is_berry = false;
         else if (calcType === '树果遽增') data.e_s_is_berry = true;
         else {
-            // 传说/幻兽根据自身属性决定
             data.e_s_is_berry = data.e_s_is_berry !== undefined ? data.e_s_is_berry : false;
         }
         
@@ -215,7 +212,6 @@ function calculate() {
     }
 
     let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, false);
-    // 检查是否为未完成数据
     if (soloResult.total === "数据待补全") {
         resultBox.innerHTML = `<b>${pokeSelect.options[pokeSelect.selectedIndex].text} 的数据尚未完成，无法计算。</b>`;
         return;
