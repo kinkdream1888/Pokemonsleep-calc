@@ -131,16 +131,19 @@ function calculate() {
             let totalSleep = foodRatio + skillRatioSleep;
 
             let lines = [];
-            lines.push(`<b>${pokeValue}（料理成功S）</b> | 食材型`);
-            lines.push(`副技能：${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格：${nature}`);
+            lines.push(`类型: 食材型 (${pokeValue}·料理成功S)`);
+            lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
             lines.push(`M_h: ${out.M_h.toFixed(4)} | M_f: ${out.M_f.toFixed(4)} | M_p: ${out.M_p.toFixed(4)}${useRealistic ? ' (打折)' : ''}`);
-            lines.push(`食材：${out.foodCount.toFixed(1)} 个 (vs ${rivalFood} ${expertFood.desc} ${expertFood.food}) → <span class="highlight">${foodRatio.toFixed(3)}</span>`);
-            lines.push(`技能(无损耗)：${out.skillNoSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill}) → <span class="highlight">${skillRatioNoSleep.toFixed(3)}</span>`);
-            lines.push(`技能(睡眠损耗)：${out.skillSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill_sleep}) → <span class="highlight">${skillRatioSleep.toFixed(3)}</span>`);
-            lines.push(`<b>综合强度（无损耗）：<span class="highlight">${totalNoSleep.toFixed(2)} 格</span></b>`);
-            lines.push(`<b>综合强度（有损耗）：<span class="highlight">${totalSleep.toFixed(2)} 格</span></b>`);
-            lines.push(`※ 综合强度 = 食材产出比 + 技能产出比。睡眠损耗系数：古月鸟0.8276，老翁龙0.8402。`);
-            if (useRealistic) lines.push(`※ 实战估算已生效，技能概率已打折。`);
+            lines.push('');
+            lines.push(`食材产出: ${out.foodCount.toFixed(1)} 个 (vs ${rivalFood} ${expertFood.desc} ${expertFood.food}) → <span class="highlight">${foodRatio.toFixed(3)}</span>`);
+            lines.push(`技能次数 (无损耗): ${out.skillNoSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill}) → <span class="highlight">${skillRatioNoSleep.toFixed(3)}</span>`);
+            lines.push(`技能次数 (睡眠损耗): ${out.skillSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill_sleep}) → <span class="highlight">${skillRatioSleep.toFixed(3)}</span>`);
+            lines.push(`综合强度 (无损耗): <b><span class="highlight">${totalNoSleep.toFixed(2)} 格</span></b>`);
+            lines.push(`综合强度 (有损耗): <b><span class="highlight">${totalSleep.toFixed(2)} 格</span></b>`);
+            lines.push('');
+            lines.push('※ 综合强度 = 食材产出比 + 技能产出比。');
+            lines.push('※ 食材产出不受睡眠影响。技能睡眠损耗系数：古月鸟0.8276，老翁龙0.8402。');
+            if (useRealistic) lines.push('※ 实战估算已生效，技能概率已打折。');
             helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
             return;
@@ -158,16 +161,18 @@ function calculate() {
             let improveTeam = (totalTeam - 1) * 100;
 
             let lines = [];
-            lines.push(`食材型（其他宝可梦）`);
-            lines.push(`副技能：${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格：${nature}`);
+            lines.push(`类型: 食材型 (其他宝可梦)`);
+            lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
             lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
+            lines.push('');
             if (hasHelper) {
-                lines.push(`单帮手：<span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
-                lines.push(`5帮手：<span class="highlight">${totalTeam.toFixed(4)}</span> (${improveTeam.toFixed(2)}%)`);
+                lines.push(`单帮手: <span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
+                lines.push(`5帮手: <span class="highlight">${totalTeam.toFixed(4)}</span> (${improveTeam.toFixed(2)}%)`);
             } else {
-                lines.push(`总倍率：<span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
+                lines.push(`总倍率: <span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
             }
-            lines.push(`※ 此为通用食材型计算，不包含特定宝可梦数据。`);
+            lines.push('');
+            lines.push('※ 此为通用食材型计算，不包含特定宝可梦数据。');
             helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
             return;
@@ -190,32 +195,35 @@ function calculate() {
     let lines = [];
     let typeLabel = calcType;
     if (pokemonName) typeLabel += ` (${pokemonName})`;
-    lines.push(`<b>${typeLabel}</b>`);
-    lines.push(`副技能：${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格：${nature}`);
+    lines.push(`类型: ${typeLabel}`);
+    lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
     lines.push(`M_h: ${soloResult.M_h} | M_p: ${soloResult.M_p} | M_f: ${soloResult.M_f}`);
+    lines.push('');
 
     lines.push('【理论倍率】');
     if (hasHelper) {
-        lines.push(`单帮手：<span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
-        lines.push(`5帮手：<span class="highlight">${teamResult.total}</span> (${teamResult.improve}%)`);
+        lines.push(`单帮手: <span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
+        lines.push(`5帮手: <span class="highlight">${teamResult.total}</span> (${teamResult.improve}%)`);
     } else {
-        lines.push(`总倍率：<span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
+        lines.push(`总倍率: <span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
     }
 
     if (useRealistic && (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType))) {
         let realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true);
         let realisticTeam = null;
         if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
+        lines.push('');
         lines.push('【实战估算】');
-        lines.push(`M_p (打折后)：${realisticSolo.M_p}`);
+        lines.push(`M_p (打折后): <span class="highlight-blue">${realisticSolo.M_p}</span>`);
         if (hasHelper) {
-            lines.push(`单帮手：<span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
-            lines.push(`5帮手：<span class="highlight-blue">${realisticTeam.total}</span> (${realisticTeam.improve}%)`);
+            lines.push(`单帮手: <span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
+            lines.push(`5帮手: <span class="highlight-blue">${realisticTeam.total}</span> (${realisticTeam.improve}%)`);
         } else {
-            lines.push(`总倍率：<span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
+            lines.push(`总倍率: <span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
         }
     }
 
+    lines.push('');
     helperOverflowAnalysis(selectedSubs, lines);
 
     if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '拉帝欧斯（神兽）') {
@@ -229,4 +237,4 @@ function calculate() {
         lines.push('※ 神兽：技能受同属性队友影响，计算基于最大加成（78树果）。');
 
     resultBox.innerHTML = lines.join('<br>');
-                }
+}
