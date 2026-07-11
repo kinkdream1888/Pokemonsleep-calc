@@ -26,7 +26,6 @@ const PHANTOM_MONS_DATA = {
         skillLabel: "梦魇（能量填充M）"
     },
 };
-
 const HYBRID_FOOD_MONS_DATA = {
     "古月鸟": { 
         interval: 2700, prob_f: 0.165, avg_food: 4.667, prob_s: 0.039,
@@ -38,6 +37,17 @@ const HYBRID_FOOD_MONS_DATA = {
         food_rival: "隆隆岩", skill_rival: "咚咚鼠", sleep_coef: 0.8402,
         skillLabel: "料理成功S"
     },
+};
+// 技能型特殊宝可梦（双修食材）
+const SPECIAL_SKILL_MONS_DATA = {
+    "穿山王": {
+        unfinished: true,
+        skillLabel: "食材精选S"
+    },
+    "岩殿居蟹": {
+        unfinished: true,
+        skillLabel: "食材精选S"
+    }
 };
 
 const EXPERT_GRAD_DATA = {
