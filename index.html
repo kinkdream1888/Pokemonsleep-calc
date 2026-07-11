@@ -140,6 +140,17 @@
         .row { margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; }
         .row label { width: 80px; font-weight: bold; font-size: 0.9em; }
         select, input[type="checkbox"] { margin-right: 5px; }
+        .skill-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-left: 8px;
+            font-size: 0.8em;
+            color: #555;
+            white-space: nowrap;
+        }
         .sub-skills { 
             display: flex; 
             flex-wrap: wrap; 
@@ -238,7 +249,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.5.1</small>
+        <small>V0.1.5.2</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -266,6 +277,7 @@
     <div class="row" id="pokeRow" style="display:none;">
         <label>选择宝可梦:</label>
         <select id="pokeSelect"></select>
+        <span id="skillTag" class="skill-tag" style="display:none;"></span>
     </div>
 
     <div class="note" id="subNote">※ 树果S为可选副技能，最多选4个</div>
@@ -299,10 +311,15 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.5.2', date: '2026-07-12', notes: [
+        '界面优化：选择宝可梦时右侧动态显示技能标签，选项文字精简。',
+        '幻兽类型锁定性格为坦率。',
+        '食材型说明文字更新，支持后续食材精选S宝可梦。'
+    ]},
     { version: 'V0.1.5.1', date: '2026-07-12', notes: [
-        '修正树果型树果S倍率（从2.0修正为1.5，因为基础2果→3果）。',
+        '修正树果型树果S倍率（1.5）。',
         '拉帝欧斯显示名称添加“流星群（树果遽增）”。',
-        '新增克雷色利亚（传说）、达克莱伊（幻兽），数据待补全。'
+        '新增克雷色利亚、达克莱伊（数据待补全）。'
     ]},
     { version: 'V0.1.5', date: '2026-07-12', notes: [
         '树果型基准改为纯白板，树果S成为可选副技能。',
@@ -341,6 +358,7 @@ function toggleAnnounce() {
 const typeSelect = document.getElementById('typeSelect');
 const pokeRow = document.getElementById('pokeRow');
 const pokeSelect = document.getElementById('pokeSelect');
+const skillTag = document.getElementById('skillTag');
 const subNote = document.getElementById('subNote');
 const subCheckboxes = document.getElementById('subCheckboxes');
 const natureSelect = document.getElementById('natureSelect');
@@ -396,11 +414,28 @@ function updateRealisticVisibility() {
     }
 }
 
+function updateSkillTag() {
+    let calcType = typeSelect.value;
+    let pokeValue = pokeSelect.value;
+    skillTag.style.display = 'none';
+    if (calcType === '食材型' && pokeValue && HYBRID_FOOD_MONS_DATA[pokeValue] && HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '传说宝可梦' && pokeValue && LEGENDARY_MONS_DATA[pokeValue] && LEGENDARY_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = LEGENDARY_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '幻兽' && pokeValue && PHANTOM_MONS_DATA[pokeValue] && PHANTOM_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = PHANTOM_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    }
+}
+
 function onTypeChange() {
     currentType = typeSelect.value;
     let showBerryS = ['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType);
     renderSubCheckboxes(showBerryS);
 
+    // 填充宝可梦列表
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -423,7 +458,7 @@ function onTypeChange() {
         for (let mon of Object.keys(LEGENDARY_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
-            opt.textContent = LEGENDARY_MONS_DATA[mon].displayName || mon;
+            opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
     } else if (currentType === '幻兽') {
@@ -432,9 +467,12 @@ function onTypeChange() {
         for (let mon of Object.keys(PHANTOM_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
-            opt.textContent = PHANTOM_MONS_DATA[mon].displayName || mon;
+            opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
+        // 锁定性格为坦率
+        natureSelect.value = '坦率';
+        natureSelect.disabled = true;
     } else if (currentType === '食材型') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -445,24 +483,27 @@ function onTypeChange() {
         for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
-            opt.textContent = mon + ' (料理成功S)';
+            opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
         pokeSelect.value = '__other__';
+        natureSelect.disabled = false;
     } else {
         pokeRow.style.display = 'none';
+        natureSelect.disabled = false;
     }
 
     maxSubs = 4;
     if (['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType)) {
         subNote.textContent = '※ 树果S为可选副技能（占用1个副技能位），最多选4个（含树果S）';
     } else if (currentType === '食材型') {
-        subNote.textContent = '※ 不附带树果S，最多选4个副技能。料理成功S宝可梦可与专家对比。';
+        subNote.textContent = '※ 不附带树果S，最多选4个副技能。料理成功S、食材精选S宝可梦可与专家对比。';
     } else {
         subNote.textContent = '※ 最多选择4个副技能';
     }
 
     updateRealisticVisibility();
+    updateSkillTag();
     enforceSubLimit();
     resultBox.innerHTML = '';
     removeSaveButton();
@@ -470,6 +511,7 @@ function onTypeChange() {
 
 pokeSelect.addEventListener('change', () => {
     updateRealisticVisibility();
+    updateSkillTag();
 });
 
 function onSubChange() { enforceSubLimit(); }
