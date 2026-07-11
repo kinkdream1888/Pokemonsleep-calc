@@ -317,7 +317,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.7.1</small>
+        <small>V0.1.7.2</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -339,7 +339,7 @@
             <option value="能量填充M">能量填充M</option>
             <option value="树果遽增">树果遽增</option>
             <option value="传说宝可梦">传说宝可梦</option>
-            <option value="幻兽">幻兽</option>
+            <option value="幻兽">全能型（幻兽）</option>
         </select>
     </div>
 
@@ -382,6 +382,7 @@
             <option value="3">50级(前3格)</option>
         </select>
         <button class="prob-btn" style="background: #8e44ad; max-width: 120px;" onclick="openNaturePanel()">性格多选</button>
+        <span style="font-size: 0.7em; color: gray; margin-left: 5px;">（默认使用主性格）</span>
         <span id="natureCount" style="font-size: 0.8em; color: gray;"></span>
     </div>
     <div class="prob-result" id="probResult"></div>
@@ -412,6 +413,7 @@
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
     // ========== 0.1.x：网页工具时代 ==========
+    { version: 'V0.1.7.2', date: '2026-07-12', notes: ['达克莱伊数据实装，开放计算。', '幻兽选项改名为“全能型（幻兽）”，捕捉概率对幻兽禁用。', '性格多选增加默认说明。'] },
     { version: 'V0.1.7.1', date: '2026-07-12', notes: ['克雷色利亚数据实装，开放计算。'] },
     { version: 'V0.1.7', date: '2026-07-12', notes: [
         '捕捉概率新增性格多选、模拟等级（50/70级）功能。',
@@ -800,6 +802,11 @@ function calculateProbability() {
     }
     let lockGold = parseInt(document.getElementById('lockGold').value);
     let simSlots = parseInt(document.getElementById('simLevel').value);
+        if (calcType === '幻兽') {
+        document.getElementById('probResult').innerHTML = '※ 幻兽副技能需使用灵感种子刷新，因此暂时无法计算。';
+        document.getElementById('probResult').style.display = 'block';
+        return;
+    }
     let calcType = typeSelect.value;
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
