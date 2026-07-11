@@ -417,7 +417,8 @@ const UPDATE_LOG = [
     '达克莱伊数据实装，开放计算。',
     '幻兽选项改名为“全能型（幻兽）”，捕捉概率对幻兽禁用。',
     '性格多选增加默认说明。',
-    '新增食材精选S系列宝可梦（大嘴娃、蝶结萌虻、乌鸦头头），数据待补全。'
+    '新增食材精选S系列宝可梦（大嘴娃、蝶结萌虻、乌鸦头头），数据待补全。',
+    '新增传说宝可梦：雷公、水君、炎帝（帮手加速），数据待补全。'
 ]},
     { version: 'V0.1.7.1', date: '2026-07-12', notes: ['克雷色利亚数据实装，开放计算。'] },
     { version: 'V0.1.7', date: '2026-07-12', notes: [
@@ -674,7 +675,7 @@ function onTypeChange() {
         pokeSelect.innerHTML = '';
         let optDefault = document.createElement('option');
         optDefault.value = '__other__';
-        optDefault.textContent = '其他宝可梦';
+        optDefault.textContent = '纯食材型';
         pokeSelect.appendChild(optDefault);
         for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
             let opt = document.createElement('option');
@@ -689,7 +690,7 @@ function onTypeChange() {
         pokeSelect.innerHTML = '';
         let optDefault = document.createElement('option');
         optDefault.value = '__other__';
-        optDefault.textContent = '其他宝可梦';
+        optDefault.textContent = '功能型';
         pokeSelect.appendChild(optDefault);
         for (let mon of Object.keys(SPECIAL_SKILL_MONS_DATA)) {
             let opt = document.createElement('option');
