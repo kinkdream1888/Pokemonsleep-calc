@@ -16,7 +16,7 @@ const LEGENDARY_MONS_DATA = {
         skillLabel: "流星群（树果遽增）"
     },
     "克雷色利亚": { 
-        unfinished: true,
+        prob_f: 0.239, e_f: 127.7, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
         skillLabel: "新月祈祷（活力全体疗愈S）"
     },
 };
@@ -38,16 +38,9 @@ const HYBRID_FOOD_MONS_DATA = {
         skillLabel: "料理成功S"
     },
 };
-// 技能型特殊宝可梦（双修食材）
 const SPECIAL_SKILL_MONS_DATA = {
-    "穿山王": {
-        unfinished: true,
-        skillLabel: "食材精选S"
-    },
-    "岩殿居蟹": {
-        unfinished: true,
-        skillLabel: "食材精选S"
-    }
+    "穿山王": { unfinished: true, skillLabel: "食材精选S" },
+    "岩殿居蟹": { unfinished: true, skillLabel: "食材精选S" }
 };
 
 const EXPERT_GRAD_DATA = {
@@ -59,7 +52,7 @@ const EXPERT_GRAD_DATA = {
 const REALISTIC_COEFF = {
     "电龙": 0.92, "树才怪": 0.90, "太阳伊布": 0.92, "音波龙": 0.92,
     "蜥蜴王": 0.95, "勇士雄鹰": 0.94, "谜拟Q": 0.94,
-    "拉帝欧斯": 0.93, "古月鸟": 0.88, "老翁龙": 0.88,
+    "拉帝欧斯": 0.93, "克雷色利亚": 0.91, "古月鸟": 0.88, "老翁龙": 0.88,
 };
 const DEFAULT_REALISTIC_COEFF = 0.92;
 const SKILL_TYPE_REALISTIC_COEFF = 0.90;
