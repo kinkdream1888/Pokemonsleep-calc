@@ -183,8 +183,54 @@
             gap: 6px;
         }
         .checkbox-row input[type="checkbox"] { margin: 0; }
-        .highlight { color: #c0392b; font-weight: bold; }
-        .highlight-blue { color: #2980b9; font-weight: bold; }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 8px;
+        }
+        .save-btn:hover { background: #219a52; }
+        .history-panel {
+            margin-top: 15px;
+            border-top: 2px solid #3498db;
+            padding-top: 10px;
+        }
+        .history-item {
+            background: #f0f8ff;
+            border: 1px solid #bdd7ee;
+            border-radius: 5px;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .history-item:hover { background: #e6f0fa; }
+        .history-item span { flex: 1; }
+        .history-item .delete-history {
+            background: none;
+            border: none;
+            color: #c0392b;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .clear-history-btn {
+            background: none;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            cursor: pointer;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -192,7 +238,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.4.10</small>
+        <small>V0.1.4.11</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -239,6 +285,13 @@
     <button class="btn" onclick="calculate()">计算效率</button>
 
     <div class="result" id="resultBox"></div>
+
+    <!-- 历史记录面板 -->
+    <div class="history-panel" id="historyPanel">
+        <b>📋 已保存的结果对比</b>
+        <div id="historyList"></div>
+        <button class="clear-history-btn" onclick="clearHistory()">清空历史</button>
+    </div>
 </div>
 
 <script src="data.js"></script>
@@ -246,16 +299,17 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.4.11', date: '2026-07-11', notes: ['新增结果保存与对比功能，支持保存多个配置进行横向比较。'] },
     { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能概率/食材概率副技能叠加方式错误（应为相加而非相乘）。'] },
     { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出结果，简化文字，高亮关键数据。古月鸟/老翁龙选项改名为“料理成功S”。'] },
     { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化：改为纯色背景+右下角精灵球水印，修复手机端精灵球变形。'] },
     { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：增加精灵球图标与背景图案。'] },
-    { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化技能就绪待机损耗提示，统一为“损耗可能导致实际能量/次数低于理论值约2~4%”。'] },
-    { version: 'V0.1.4.5', date: '2026-07-11', notes: ['彻底修复实战估算损耗计算失效（理论倍率与实战估算分离）。'] },
+    { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化技能就绪待机损耗提示。'] },
+    { version: 'V0.1.4.5', date: '2026-07-11', notes: ['彻底修复实战估算损耗计算失效。'] },
     { version: 'V0.1.4.4', date: '2026-07-11', notes: ['再次修复实战估算损耗计算失效。'] },
-    { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复技能型、能量填充M、树果遽增、拉帝欧斯实战估算无效。'] },
+    { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复实战估算无效。'] },
     { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算选项显示逻辑。'] },
-    { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型新增综合强度说明，对照组面板增加详细描述。'] },
+    { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型新增综合强度说明。'] },
     { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型（古月鸟、老翁龙）。'] },
     { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
     { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误。'] },
@@ -284,9 +338,11 @@ const natureSelect = document.getElementById('natureSelect');
 const resultBox = document.getElementById('resultBox');
 const realisticCheckbox = document.getElementById('realisticModeCheckbox');
 const realisticRow = document.getElementById('realisticRow');
+const historyList = document.getElementById('historyList');
 
 let maxSubs = 3;
 let currentType = '树果型';
+let savedHistory = [];  // 存储历史记录
 
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
@@ -362,7 +418,7 @@ function onTypeChange() {
         for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
-            opt.textContent = mon + ' (料理成功S)';  // 改为料理成功S
+            opt.textContent = mon + ' (料理成功S)';
             pokeSelect.appendChild(opt);
         }
         pokeSelect.value = '__other__';
@@ -387,6 +443,7 @@ function onTypeChange() {
     updateRealisticVisibility();
     enforceSubLimit();
     resultBox.innerHTML = '';
+    removeSaveButton();
 }
 
 pokeSelect.addEventListener('change', () => {
@@ -414,6 +471,87 @@ function getSelectedSubs() {
 typeSelect.addEventListener('change', onTypeChange);
 renderSubCheckboxes(false);
 onTypeChange();
+
+// 移除已有的保存按钮（避免重复添加）
+function removeSaveButton() {
+    let oldBtn = document.getElementById('saveResultBtn');
+    if (oldBtn) oldBtn.remove();
+}
+
+// 添加保存按钮到结果框
+function addSaveButton() {
+    removeSaveButton();
+    let btn = document.createElement('button');
+    btn.id = 'saveResultBtn';
+    btn.className = 'save-btn';
+    btn.textContent = '💾 保存此结果';
+    btn.onclick = function() {
+        let content = resultBox.innerHTML;
+        if (!content.trim()) return;
+        // 生成摘要信息
+        let typeLabel = typeSelect.value;
+        let poke = '';
+        if (['能量填充M', '树果遽增'].includes(typeLabel) || (typeLabel === '食材型' && pokeSelect.value !== '__other__')) {
+            poke = pokeSelect.value + ' ';
+        }
+        let subs = getSelectedSubs().join(',') || '无';
+        let nature = natureSelect.value;
+        // 提取关键倍率
+        let summary = `${typeLabel} ${poke} | ${subs} | ${nature}`;
+        // 尝试提取倍率数字（简单匹配）
+        let matchTheory = content.match(/<span[^>]*color:#2980b9[^>]*>([^<]+)<\/span>/);
+        let matchReal = content.match(/<span[^>]*color:#27ae60[^>]*>([^<]+)<\/span>/);
+        if (matchTheory) summary += ` | 理论: ${matchTheory[1]}`;
+        if (matchReal) summary += ` | 实战: ${matchReal[1]}`;
+        // 保存
+        savedHistory.unshift({ summary: summary, content: content });
+        if (savedHistory.length > 10) savedHistory.pop(); // 最多10条
+        renderHistory();
+        alert('结果已保存到下方历史记录！');
+    };
+    resultBox.appendChild(btn);
+}
+
+// 渲染历史记录列表
+function renderHistory() {
+    historyList.innerHTML = '';
+    savedHistory.forEach((item, index) => {
+        let div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span>${item.summary}</span>`;
+        let delBtn = document.createElement('button');
+        delBtn.className = 'delete-history';
+        delBtn.textContent = '❌';
+        delBtn.onclick = function(e) {
+            e.stopPropagation();
+            savedHistory.splice(index, 1);
+            renderHistory();
+        };
+        div.appendChild(delBtn);
+        div.onclick = function() {
+            // 点击后在上方结果框显示完整内容
+            resultBox.innerHTML = item.content;
+            addSaveButton(); // 重新添加保存按钮
+        };
+        historyList.appendChild(div);
+    });
+}
+
+// 清空历史
+function clearHistory() {
+    if (confirm('确定要清空所有已保存的结果吗？')) {
+        savedHistory = [];
+        renderHistory();
+    }
+}
+
+// 覆盖原有的 calculate 函数，在结果渲染后添加保存按钮
+const originalCalculate = calculate;
+calculate = function() {
+    originalCalculate();
+    // 添加保存按钮
+    addSaveButton();
+};
 </script>
 </body>
 </html>
