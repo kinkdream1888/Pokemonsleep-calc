@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V0.1</title>
+    <title>宝可梦Sleep 效率计算器 V0.1.4</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -192,7 +192,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.4.9</small>
+        <small>V0.1.4.10</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -246,6 +246,7 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能概率/食材概率副技能叠加方式错误（应为相加而非相乘）。'] },
     { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出结果，简化文字，高亮关键数据。古月鸟/老翁龙选项改名为“料理成功S”。'] },
     { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化：改为纯色背景+右下角精灵球水印，修复手机端精灵球变形。'] },
     { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：增加精灵球图标与背景图案。'] },
