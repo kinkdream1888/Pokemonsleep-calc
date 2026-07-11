@@ -135,11 +135,11 @@ function calculate() {
             lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
             lines.push(`M_h: ${out.M_h.toFixed(4)} | M_f: ${out.M_f.toFixed(4)} | M_p: ${out.M_p.toFixed(4)}${useRealistic ? ' (打折)' : ''}`);
             lines.push('');
-            lines.push(`食材产出: ${out.foodCount.toFixed(1)} 个 (vs ${rivalFood} ${expertFood.desc} ${expertFood.food}) → <span class="highlight">${foodRatio.toFixed(3)}</span>`);
-            lines.push(`技能次数 (无损耗): ${out.skillNoSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill}) → <span class="highlight">${skillRatioNoSleep.toFixed(3)}</span>`);
-            lines.push(`技能次数 (睡眠损耗): ${out.skillSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill_sleep}) → <span class="highlight">${skillRatioSleep.toFixed(3)}</span>`);
-            lines.push(`综合强度 (无损耗): <b><span class="highlight">${totalNoSleep.toFixed(2)} 格</span></b>`);
-            lines.push(`综合强度 (有损耗): <b><span class="highlight">${totalSleep.toFixed(2)} 格</span></b>`);
+            lines.push(`食材产出: ${out.foodCount.toFixed(1)} 个 (vs ${rivalFood} ${expertFood.desc} ${expertFood.food}) → ${foodRatio.toFixed(3)}`);
+            lines.push(`技能次数 (无损耗): ${out.skillNoSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill}) → ${skillRatioNoSleep.toFixed(3)}`);
+            lines.push(`技能次数 (睡眠损耗): ${out.skillSleep.toFixed(2)} 次 (vs ${rivalSkill} ${expertSkill.desc} ${expertSkill.skill_sleep}) → ${skillRatioSleep.toFixed(3)}`);
+            lines.push(`<b>综合强度 (无损耗): <span style="color:#2980b9;font-weight:bold;">${totalNoSleep.toFixed(2)} 格</span></b>`);
+            lines.push(`<b>综合强度 (有损耗): <span style="color:#27ae60;font-weight:bold;">${totalSleep.toFixed(2)} 格</span></b>`);
             lines.push('');
             lines.push('※ 综合强度 = 食材产出比 + 技能产出比。');
             lines.push('※ 食材产出不受睡眠影响。技能睡眠损耗系数：古月鸟0.8276，老翁龙0.8402。');
@@ -166,10 +166,10 @@ function calculate() {
             lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
             lines.push('');
             if (hasHelper) {
-                lines.push(`单帮手: <span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
-                lines.push(`5帮手: <span class="highlight">${totalTeam.toFixed(4)}</span> (${improveTeam.toFixed(2)}%)`);
+                lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
+                lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${totalTeam.toFixed(4)}</span> (${improveTeam.toFixed(2)}%)`);
             } else {
-                lines.push(`总倍率: <span class="highlight">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
+                lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${totalSolo.toFixed(4)}</span> (${improveSolo.toFixed(2)}%)`);
             }
             lines.push('');
             lines.push('※ 此为通用食材型计算，不包含特定宝可梦数据。');
@@ -202,10 +202,10 @@ function calculate() {
 
     lines.push('【理论倍率】');
     if (hasHelper) {
-        lines.push(`单帮手: <span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
-        lines.push(`5帮手: <span class="highlight">${teamResult.total}</span> (${teamResult.improve}%)`);
+        lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+        lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${teamResult.total}</span> (${teamResult.improve}%)`);
     } else {
-        lines.push(`总倍率: <span class="highlight">${soloResult.total}</span> (${soloResult.improve}%)`);
+        lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
     }
 
     if (useRealistic && (['技能型', '能量填充M', '树果遽增', '拉帝欧斯（神兽）'].includes(calcType))) {
@@ -214,12 +214,12 @@ function calculate() {
         if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
         lines.push('');
         lines.push('【实战估算】');
-        lines.push(`M_p (打折后): <span class="highlight-blue">${realisticSolo.M_p}</span>`);
+        lines.push(`M_p (打折后): ${realisticSolo.M_p}`);
         if (hasHelper) {
-            lines.push(`单帮手: <span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
-            lines.push(`5帮手: <span class="highlight-blue">${realisticTeam.total}</span> (${realisticTeam.improve}%)`);
+            lines.push(`单帮手: <span style="color:#27ae60;font-weight:bold;">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
+            lines.push(`5帮手: <span style="color:#27ae60;font-weight:bold;">${realisticTeam.total}</span> (${realisticTeam.improve}%)`);
         } else {
-            lines.push(`总倍率: <span class="highlight-blue">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
+            lines.push(`总倍率: <span style="color:#27ae60;font-weight:bold;">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
         }
     }
 
