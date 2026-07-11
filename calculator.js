@@ -26,10 +26,6 @@ function calcMultipliers(selectedSubs, nature, teamBoost = false) {
 
     return { speedMult, skillMult, foodMult, berryMult };
 }
-
-// 其余函数（calculateEnergy、compute、computeHybridOutput、helperOverflowAnalysis、calculate）保持不变
-// 直接保留你现有 calculator.js 中这些函数的代码即可
-
 function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
     let p_f = Math.min(data.prob_f * M_f, 1.0);
     let p_berry = 1.0 - p_f;
