@@ -13,17 +13,24 @@ const BERRY_BOOST_MONS_DATA = {
 const LEGENDARY_MONS_DATA = {
     "拉帝欧斯": { 
         prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
-        skillLabel: "流星群（树果遽增）"
+        skillLabel: "流星群（树果遽增）",
+        pity: 63 // 保底次数，仅备注
     },
     "克雷色利亚": { 
         prob_f: 0.239, e_f: 127.7, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
-        skillLabel: "新月祈祷（活力全体疗愈S）"
+        skillLabel: "新月祈祷（活力全体疗愈S）",
+        pity: 62
     },
 };
 const PHANTOM_MONS_DATA = {
     "达克莱伊": { 
-        unfinished: true,
-        skillLabel: "梦魇（能量填充M）"
+        prob_f: 0.192, e_f: 537.9, prob_s: 0.03345, e_b: 170, e_s: 18515, e_s_is_berry: false,
+        skillLabel: "梦魇（能量填充M）",
+        pity: 49,
+        sleep_coef: 0.951,      // 睡眠损耗系数
+        realistic_coef: 0.86,   // 专属兑现系数
+        berry_count: 2,         // 基础产2果
+        food_dist: [2,3,4]      // 食材分布
     },
 };
 const HYBRID_FOOD_MONS_DATA = {
@@ -53,6 +60,7 @@ const REALISTIC_COEFF = {
     "电龙": 0.92, "树才怪": 0.90, "太阳伊布": 0.92, "音波龙": 0.92,
     "蜥蜴王": 0.95, "勇士雄鹰": 0.94, "谜拟Q": 0.94,
     "拉帝欧斯": 0.93, "克雷色利亚": 0.91, "古月鸟": 0.88, "老翁龙": 0.88,
+    "达克莱伊": 0.86,
 };
 const DEFAULT_REALISTIC_COEFF = 0.92;
 const SKILL_TYPE_REALISTIC_COEFF = 0.90;
