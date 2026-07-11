@@ -14,12 +14,24 @@ const LEGENDARY_MONS_DATA = {
     "拉帝欧斯": { 
         prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
         skillLabel: "流星群（树果遽增）",
-        pity: 63 // 保底次数，仅备注
+        pity: 63
     },
     "克雷色利亚": { 
         prob_f: 0.239, e_f: 127.7, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
         skillLabel: "新月祈祷（活力全体疗愈S）",
         pity: 62
+    },
+    "雷公": {
+        unfinished: true,
+        skillLabel: "帮手加速",
+    },
+    "炎帝": {
+        unfinished: true,
+        skillLabel: "帮手加速",
+    },
+    "水君": {
+        unfinished: true,
+        skillLabel: "帮手加速",
     },
 };
 const PHANTOM_MONS_DATA = {
