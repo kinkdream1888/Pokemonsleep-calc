@@ -1,22 +1,34 @@
 // ========== 计算逻辑 ==========
 function calcMultipliers(selectedSubs, nature, teamBoost = false) {
-    let totalSubSpeed = 0.0, skillMult = 1.0, foodMult = 1.0, berryMult = 1;
+    let totalSubSpeed = 0.0;
+    let skillAdd = 0.0;   // 技能概率副技能相加部分
+    let foodAdd = 0.0;    // 食材概率副技能相加部分
+    let berryMult = 1;
+
     for (let sub of selectedSubs) {
         let s = SUB_SKILLS[sub];
         let speedVal = (sub === '帮手奖励') ? (teamBoost ? 0.25 : 0.05) : s.speed;
         totalSubSpeed += speedVal;
-        skillMult *= s.skill;
-        foodMult *= s.food;
+        // 概率副技能改为累加
+        if (s.skill > 1.0) skillAdd += (s.skill - 1.0);
+        if (s.food > 1.0) foodAdd += (s.food - 1.0);
         berryMult *= s.berry;
     }
+
     totalSubSpeed = Math.min(totalSubSpeed, MAX_SUB_SPEED);
     let subSpeedMult = totalSubSpeed < 1 ? 1 / (1 - totalSubSpeed) : 1.0;
+
     let natureInfo = NATURES[nature];
     let speedMult = subSpeedMult * natureInfo.speed;
-    skillMult *= natureInfo.skill;
-    foodMult *= natureInfo.food;
+    // 副技能相加后，性格乘算
+    let skillMult = (1.0 + skillAdd) * natureInfo.skill;
+    let foodMult = (1.0 + foodAdd) * natureInfo.food;
+
     return { speedMult, skillMult, foodMult, berryMult };
 }
+
+// 其余函数（calculateEnergy、compute、computeHybridOutput、helperOverflowAnalysis、calculate）保持不变
+// 直接保留你现有 calculator.js 中这些函数的代码即可
 
 function calculateEnergy(data, M_h, M_p, M_f, berryMult) {
     let p_f = Math.min(data.prob_f * M_f, 1.0);
