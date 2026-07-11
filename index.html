@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝可梦Sleep 效率计算器 V0.1.4</title>
+    <title>宝可梦Sleep 效率计算器 V0.1.5</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -249,7 +249,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.5.2</small>
+        <small>V0.1.5.2.1</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -311,10 +311,11 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.5.2.1', date: '2026-07-12', notes: ['修复从幻兽类型切换到其他类型时性格被错误锁定的问题。'] },
     { version: 'V0.1.5.2', date: '2026-07-12', notes: [
         '界面优化：选择宝可梦时右侧动态显示技能标签，选项文字精简。',
         '幻兽类型锁定性格为坦率。',
-        '食材型说明文字更新，支持后续食材精选S宝可梦。'
+        '食材型说明文字更新。'
     ]},
     { version: 'V0.1.5.1', date: '2026-07-12', notes: [
         '修正树果型树果S倍率（1.5）。',
@@ -444,6 +445,7 @@ function onTypeChange() {
             opt.value = mon; opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
+        natureSelect.disabled = false;
     } else if (currentType === '树果遽增') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -452,6 +454,7 @@ function onTypeChange() {
             opt.value = mon; opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
+        natureSelect.disabled = false;
     } else if (currentType === '传说宝可梦') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -461,6 +464,7 @@ function onTypeChange() {
             opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
+        natureSelect.disabled = false;
     } else if (currentType === '幻兽') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -489,6 +493,7 @@ function onTypeChange() {
         pokeSelect.value = '__other__';
         natureSelect.disabled = false;
     } else {
+        // 树果型、技能型
         pokeRow.style.display = 'none';
         natureSelect.disabled = false;
     }
