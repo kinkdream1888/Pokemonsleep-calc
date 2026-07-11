@@ -457,7 +457,6 @@ function renderAnnouncePage(page) {
         li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
         announceList.appendChild(li);
     });
-    // 分页按钮
     let totalPages = Math.ceil(UPDATE_LOG.length / ITEMS_PER_PAGE);
     announcePages.innerHTML = '';
     for (let i = 0; i < totalPages; i++) {
@@ -500,7 +499,7 @@ const natureCountSpan = document.getElementById('natureCount');
 let maxSubs = 4;
 let currentType = '树果型';
 let savedHistory = [];
-let selectedNatures = []; // 多选性格存储
+let selectedNatures = [];
 
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
@@ -545,11 +544,128 @@ function updateRealisticVisibility() {
     }
 }
 
-function updateSkillTag() { /* 同上，不再重复 */ }
+function updateSkillTag() {
+    let calcType = typeSelect.value;
+    let pokeValue = pokeSelect.value;
+    skillTag.style.display = 'none';
+    if (calcType === '食材型' && pokeValue && HYBRID_FOOD_MONS_DATA[pokeValue] && HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '传说宝可梦' && pokeValue && LEGENDARY_MONS_DATA[pokeValue] && LEGENDARY_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = LEGENDARY_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '幻兽' && pokeValue && PHANTOM_MONS_DATA[pokeValue] && PHANTOM_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = PHANTOM_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '技能型' && pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue] && SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    }
+}
 
-function onTypeChange() { /* 同上，包含技能型特殊宝可梦 */ }
+function onTypeChange() {
+    currentType = typeSelect.value;
+    let showBerryS = ['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType);
+    renderSubCheckboxes(showBerryS);
+
+    // 填充宝可梦列表
+    if (currentType === '能量填充M') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(ENERGY_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon; opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        natureSelect.disabled = false;
+    } else if (currentType === '树果遽增') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(BERRY_BOOST_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon; opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        natureSelect.disabled = false;
+    } else if (currentType === '传说宝可梦') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(LEGENDARY_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        natureSelect.disabled = false;
+    } else if (currentType === '幻兽') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(PHANTOM_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        natureSelect.value = '坦率';
+        natureSelect.disabled = true;
+    } else if (currentType === '食材型') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        let optDefault = document.createElement('option');
+        optDefault.value = '__other__';
+        optDefault.textContent = '其他宝可梦';
+        pokeSelect.appendChild(optDefault);
+        for (let mon of Object.keys(HYBRID_FOOD_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        pokeSelect.value = '__other__';
+        natureSelect.disabled = false;
+    } else if (currentType === '技能型') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        let optDefault = document.createElement('option');
+        optDefault.value = '__other__';
+        optDefault.textContent = '其他宝可梦';
+        pokeSelect.appendChild(optDefault);
+        for (let mon of Object.keys(SPECIAL_SKILL_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        pokeSelect.value = '__other__';
+        natureSelect.disabled = false;
+    } else {
+        pokeRow.style.display = 'none';
+        natureSelect.disabled = false;
+    }
+
+    maxSubs = 4;
+    if (['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType)) {
+        subNote.textContent = '※ 树果S为可选副技能（占用1个副技能位），最多选4个（含树果S）';
+    } else if (currentType === '食材型') {
+        subNote.textContent = '※ 不附带树果S，最多选4个副技能。料理成功S、食材精选S宝可梦可与专家对比。';
+    } else {
+        subNote.textContent = '※ 最多选择4个副技能';
+    }
+
+    updateRealisticVisibility();
+    updateSkillTag();
+    enforceSubLimit();
+    resultBox.innerHTML = '';
+    removeSaveButton();
+}
+
+pokeSelect.addEventListener('change', () => {
+    updateRealisticVisibility();
+    updateSkillTag();
+});
 
 function onSubChange() { enforceSubLimit(); }
+
 function enforceSubLimit() {
     let checked = getSelectedSubs();
     if (checked.length > maxSubs) {
@@ -558,6 +674,7 @@ function enforceSubLimit() {
         alert(`当前类型最多选择${maxSubs}个副技能！`);
     }
 }
+
 function getSelectedSubs() {
     let subs = [];
     let checkboxes = subCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
@@ -618,17 +735,17 @@ function updateNatureCount() {
     }
 }
 
-// 概率计算（更新版）
+// 捕捉概率计算（V0.1.7新版，含性格多选和模拟等级）
 function calculateProbability() {
     let selectedSubs = getSelectedSubs();
     let natureProb = 0;
     if (selectedNatures.length > 0) {
         natureProb = selectedNatures.length / 25;
     } else {
-        natureProb = 1/25; // 使用当前主性格
+        natureProb = 1/25;
     }
     let lockGold = parseInt(document.getElementById('lockGold').value);
-    let simSlots = parseInt(document.getElementById('simLevel').value); // 3 or 4
+    let simSlots = parseInt(document.getElementById('simLevel').value);
     let calcType = typeSelect.value;
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
@@ -711,7 +828,76 @@ ${selectedSubs.some(s => s.endsWith('S')) ? '※ 若出现S级技能，可使用
     document.getElementById('probResult').style.display = 'block';
 }
 
-// 其余函数（保存历史、计算效率等）与之前相同，此处省略，但需保留在文件中。实际使用时请将之前的对应代码保留在文件中。
+// ========== 历史记录与保存 ==========
+function removeSaveButton() {
+    let oldBtn = document.getElementById('saveResultBtn');
+    if (oldBtn) oldBtn.remove();
+}
+
+function addSaveButton() {
+    removeSaveButton();
+    let btn = document.createElement('button');
+    btn.id = 'saveResultBtn';
+    btn.className = 'save-btn';
+    btn.textContent = '💾 保存此结果';
+    btn.onclick = function() {
+        let content = resultBox.innerHTML;
+        if (!content.trim()) return;
+        let typeLabel = typeSelect.value;
+        let poke = '';
+        if (['能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(typeLabel) || (typeLabel === '食材型' && pokeSelect.value !== '__other__') || (typeLabel === '技能型' && pokeSelect.value !== '__other__')) {
+            poke = pokeSelect.options[pokeSelect.selectedIndex].text + ' ';
+        }
+        let subs = getSelectedSubs().join(',') || '无';
+        let nature = natureSelect.value;
+        let summary = `${typeLabel} ${poke}| ${subs} | ${nature}`;
+        let matchTheory = content.match(/<span[^>]*color:#2980b9[^>]*>([^<]+)<\/span>/);
+        let matchReal = content.match(/<span[^>]*color:#27ae60[^>]*>([^<]+)<\/span>/);
+        if (matchTheory) summary += ` | 理论: ${matchTheory[1]}`;
+        if (matchReal) summary += ` | 实战: ${matchReal[1]}`;
+        savedHistory.unshift({ summary: summary, content: content });
+        if (savedHistory.length > 10) savedHistory.pop();
+        renderHistory();
+        alert('结果已保存到下方历史记录！');
+    };
+    resultBox.appendChild(btn);
+}
+
+function renderHistory() {
+    historyList.innerHTML = '';
+    savedHistory.forEach((item, index) => {
+        let div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span>${item.summary}</span>`;
+        let delBtn = document.createElement('button');
+        delBtn.className = 'delete-history';
+        delBtn.textContent = '❌';
+        delBtn.onclick = function(e) {
+            e.stopPropagation();
+            savedHistory.splice(index, 1);
+            renderHistory();
+        };
+        div.appendChild(delBtn);
+        div.onclick = function() {
+            resultBox.innerHTML = item.content;
+            addSaveButton();
+        };
+        historyList.appendChild(div);
+    });
+}
+
+function clearHistory() {
+    if (confirm('确定要清空所有已保存的结果吗？')) {
+        savedHistory = [];
+        renderHistory();
+    }
+}
+
+const originalCalculate = calculate;
+calculate = function() {
+    originalCalculate();
+    addSaveButton();
+};
 </script>
 </body>
 </html>
