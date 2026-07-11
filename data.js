@@ -44,10 +44,20 @@ const HYBRID_FOOD_MONS_DATA = {
         food_rival: "隆隆岩", skill_rival: "咚咚鼠", sleep_coef: 0.8402,
         skillLabel: "料理成功S"
     },
+    "大嘴娃": { 
+        unfinished: true, dropType: 1,
+        skillLabel: "怪力钳（食材精选S）"
+    },
+    "蝶结萌虻": { 
+        unfinished: true, dropType: 3,
+        skillLabel: "食材精选S"
+    },
 };
+
 const SPECIAL_SKILL_MONS_DATA = {
-    "穿山王": { unfinished: true, skillLabel: "食材精选S" },
-    "岩殿居蟹": { unfinished: true, skillLabel: "食材精选S" }
+    "穿山王": { unfinished: true, dropType: 1, skillLabel: "食材精选S" },
+    "岩殿居蟹": { unfinished: true, dropType: 2, skillLabel: "食材精选S" },
+    "乌鸦头头": { unfinished: true, skillLabel: "超幸运（食材精选S）" },
 };
 
 const EXPERT_GRAD_DATA = {
