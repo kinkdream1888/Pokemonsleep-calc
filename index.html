@@ -389,7 +389,13 @@
             font-size: 0.8em;
         }
         .page-btns button:disabled { background: #ccc; cursor: default; }
-                /* 移动端去除点击蓝框，电脑端保留键盘焦点轮廓 */
+                /* 移除移动端点击高亮 */
+        .skill-btn, .nature-btn, .skill-slot, .nature-display,
+        .prob-btn, .btn, .btn-realistic, .announce-btn,
+        .save-btn, .clear-history-btn {
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 移动端去除点击蓝框，电脑端保留键盘焦点轮廓 */
         @media (hover: none) and (pointer: coarse) {
             .skill-btn:focus,
             .nature-btn:focus,
