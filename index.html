@@ -321,13 +321,12 @@
             background: white; border-radius: 10px; padding: 8px;
             max-width: min(330px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .skill-menu-title { font-size: 0.95em; font-weight: bold; margin-bottom: 6px; }
+        .skill-menu-title { font-size: 1em; font-weight: bold; margin-bottom: 6px; }
         .skill-menu-section { margin-bottom: 5px; }
-        .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; overflow: visible;}
+        .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; overflow: visible; }
         .skill-btn {
-            padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75em;
-            position: relative;
-            overflow: visible; 
+            padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;
+            position: relative; overflow: visible; 
         }
         .skill-btn.gold { background: #ffe082; }
         .skill-btn.blue { background: #bbdefb; }
@@ -368,9 +367,9 @@
             max-width: min(360px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
         .nature-group { margin-bottom: 3px; }
-        .nature-group-title { font-weight: bold; margin-bottom: 2px; font-size: 0.75em; }
+        .nature-group-title { font-weight: bold; margin-bottom: 2px; font-size: 0.8em; }
         .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
-        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 3px; cursor: pointer; font-size: 0.7em; }
+        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 3px; cursor: pointer; font-size: 0.75em; }
         .nature-btn:hover { background: #e0e0e0; }
         .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 6px; }
         .page-btns {
@@ -389,20 +388,16 @@
             font-size: 0.8em;
         }
         .page-btns button:disabled { background: #ccc; cursor: default; }
-                /* 移除移动端点击高亮 */
+        /* 移除移动端点击高亮 */
         .skill-btn, .nature-btn, .skill-slot, .nature-display,
         .prob-btn, .btn, .btn-realistic, .announce-btn,
         .save-btn, .clear-history-btn {
             -webkit-tap-highlight-color: transparent;
         }
-        /* 移动端去除点击蓝框，电脑端保留键盘焦点轮廓 */
+        /* 移动端去除焦点轮廓 */
         @media (hover: none) and (pointer: coarse) {
-            .skill-btn:focus,
-            .nature-btn:focus,
-            .skill-slot:focus,
-            .nature-display:focus,
-            .prob-btn:focus,
-            .btn:focus,
+            .skill-btn:focus, .nature-btn:focus, .skill-slot:focus,
+            .nature-display:focus, .prob-btn:focus, .btn:focus,
             .btn-realistic:focus {
                 outline: none;
             }
@@ -556,20 +551,49 @@ const UPDATE_LOG = [
 
 const announceList = document.getElementById('announceList');
 const announcePages = document.getElementById('announcePages');
-const ITEMS_PER_PAGE = 6;
+const MAX_LINES_PER_PAGE = 18;
 let currentAnnouncePage = 0;
+let totalPages = 1;
+let pages = [];
+
+function buildPages() {
+    let result = [];
+    let currentPage = [];
+    let currentLines = 0;
+    let tempDiv = document.createElement('div');
+    tempDiv.style.cssText = 'position:absolute;visibility:hidden;width:' + announceList.clientWidth + 'px;font-size:0.85em;line-height:1.5;';
+    document.body.appendChild(tempDiv);
+
+    UPDATE_LOG.forEach(log => {
+        tempDiv.innerHTML = '';
+        let li = document.createElement('li');
+        li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
+        tempDiv.appendChild(li);
+        let entryLines = Math.ceil(tempDiv.offsetHeight / 18);
+
+        if (currentLines + entryLines > MAX_LINES_PER_PAGE && currentPage.length > 0) {
+            result.push(currentPage);
+            currentPage = [];
+            currentLines = 0;
+        }
+        currentPage.push(log);
+        currentLines += entryLines;
+    });
+    if (currentPage.length > 0) result.push(currentPage);
+    document.body.removeChild(tempDiv);
+    return result;
+}
 
 function renderAnnouncePage(page) {
-    let start = page * ITEMS_PER_PAGE;
-    let end = start + ITEMS_PER_PAGE;
-    let pageItems = UPDATE_LOG.slice(start, end);
+    if (pages.length === 0) pages = buildPages();
+    totalPages = pages.length;
+    let pageItems = pages[page] || [];
     announceList.innerHTML = '';
     pageItems.forEach(log => {
         let li = document.createElement('li');
         li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
         announceList.appendChild(li);
     });
-    let totalPages = Math.ceil(UPDATE_LOG.length / ITEMS_PER_PAGE);
     announcePages.innerHTML = '';
     for (let i = 0; i < totalPages; i++) {
         let btn = document.createElement('button');
@@ -589,6 +613,7 @@ function toggleAnnounce() {
         panel.style.display = 'none';
     } else {
         panel.style.display = 'block';
+        pages = buildPages();
         currentAnnouncePage = 0;
         renderAnnouncePage(0);
     }
@@ -920,6 +945,14 @@ calculate = function() {
     originalCalculate();
     addSaveButton();
 };
+
+// 移动端去除点击蓝框（用JS强制失焦）
+document.addEventListener('click', function(e) {
+    let target = e.target.closest('.skill-btn, .nature-btn, .skill-slot, .nature-display, .prob-btn, .btn, .btn-realistic, .announce-btn');
+    if (target) {
+        setTimeout(() => target.blur(), 50);
+    }
+});
 </script>
 </body>
 </html>
