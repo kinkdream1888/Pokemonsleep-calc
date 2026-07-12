@@ -56,10 +56,66 @@ const SPECIAL_SKILL_MONS_DATA = {
     "乌鸦头头": { unfinished: true, skillLabel: "超幸运（食材精选S）", element: "飞行" },
 };
 
-const EXPERT_GRAD_DATA = { /* 保持不变 */ };
-const REALISTIC_COEFF = { /* 保持不变 */ };
+const EXPERT_GRAD_DATA = {
+    "毒骷蛙": { food: 123.04, desc: "帮M+食概M+性格帮" },
+    "隆隆岩": { food: 164.99, desc: "帮M+食概M+性格帮" },
+    "咚咚鼠": { skill: 7.23, skill_sleep: 6.34, desc: "帮M+技概M+性格帮" },
+};
+
+const REALISTIC_COEFF = {
+    "电龙": 0.92, "树才怪": 0.90, "太阳伊布": 0.92, "音波龙": 0.92,
+    "蜥蜴王": 0.95, "勇士雄鹰": 0.94, "谜拟Q": 0.94,
+    "拉帝欧斯": 0.93, "克雷色利亚": 0.91, "古月鸟": 0.88, "老翁龙": 0.88,
+    "达克莱伊": 0.86,
+};
 const DEFAULT_REALISTIC_COEFF = 0.92;
 const SKILL_TYPE_REALISTIC_COEFF = 0.90;
-const SUB_SKILLS = { /* 保持不变 */ };
+
+const SUB_SKILLS = {
+    "树果S":  { speed: 0.0,  skill: 1.0,  food: 1.0,  berry: 2, category: "gold" },
+    "帮手奖励": { speed: 0.05, skill: 1.0,  food: 1.0,  berry: 1, category: "gold" },
+    "睡眠EXP奖励": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "gold" },
+    "研究EXP奖励": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "gold" },
+    "活力回复奖励": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "gold" },
+    "梦之碎片奖励": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "gold" },
+    "技能等级M":  { speed: 0.0,  skill: 1.0,  food: 1.0,  berry: 1, category: "gold" },
+    "技能等级S":  { speed: 0.0,  skill: 1.0,  food: 1.0,  berry: 1, category: "blue" },
+    "帮M":    { speed: 0.14, skill: 1.0, food: 1.0, berry: 1, category: "blue" },
+    "技概M":  { speed: 0.0,  skill: 1.36, food: 1.0, berry: 1, category: "blue" },
+    "食概M":  { speed: 0.0,  skill: 1.0,  food: 1.36, berry: 1, category: "blue" },
+    "持有上限L": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "blue" },
+    "持有上限M": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "blue" },
+    "帮S":    { speed: 0.07, skill: 1.0, food: 1.0, berry: 1, category: "white" },
+    "技概S":  { speed: 0.0,  skill: 1.18, food: 1.0, berry: 1, category: "white" },
+    "食概S":  { speed: 0.0,  skill: 1.0,  food: 1.18, berry: 1, category: "white" },
+    "持有上限S": { speed: 0.0, skill: 1.0, food: 1.0, berry: 1, category: "white" },
+};
 const MAX_SUB_SPEED = 0.35;
-const NATURES = { /* 你之前整理的完整25个性格 */ };
+
+const NATURES = {
+    "坦率":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "勤奋":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "害羞":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "浮躁":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "认真":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "怕寂寞": { speed: 1/0.9, skill: 1.0, food: 1.0 },
+    "勇敢":  { speed: 1/0.9, skill: 1.0, food: 1.0 },
+    "顽皮":  { speed: 1/0.9, skill: 0.8,  food: 1.0 },
+    "固执":  { speed: 1/0.9, skill: 1.0,  food: 0.8 },
+    "慢吞吞": { speed: 1.0, skill: 1.0, food: 1.2 },
+    "冷静":  { speed: 1.0, skill: 1.0, food: 1.2 },
+    "内敛":  { speed: 1/1.075, skill: 1.0, food: 1.2 },
+    "马虎":  { speed: 1.0, skill: 0.8,  food: 1.2 },
+    "自大":  { speed: 1.0, skill: 1.2, food: 1.0 },
+    "慎重":  { speed: 1.0, skill: 1.2, food: 0.8 },
+    "温顺":  { speed: 1.0, skill: 1.2, food: 1.0 },
+    "温和":  { speed: 1/1.075, skill: 1.2, food: 1.0 },
+    "天真":  { speed: 1.0, skill: 1.0, food: 0.8 },
+    "急躁":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "爽朗":  { speed: 1.0, skill: 0.8,  food: 1.0 },
+    "胆小":  { speed: 1/1.075, skill: 1.0, food: 1.0 },
+    "乐天":  { speed: 1.0, skill: 1.0, food: 0.8 },
+    "悠闲":  { speed: 1.0, skill: 1.0, food: 1.0 },
+    "淘气":  { speed: 1.0, skill: 0.8,  food: 1.0 },
+    "大胆":  { speed: 1/1.075, skill: 1.0, food: 1.0 },
+};
