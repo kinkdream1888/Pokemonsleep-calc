@@ -1,21 +1,29 @@
 // ========== 数据定义 ==========
 const ENERGY_MONS_DATA = {
     "电龙":    { prob_f: 0.130, e_f: 536.7, prob_s: 0.047, e_b: 137, e_s: 6858,
-                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "电" },
+                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "电",
+                 skillLabel: "能量填充M" },
     "树才怪":  { prob_f: 0.217, e_f: 466.7, prob_s: 0.072, e_b: 165, e_s: 6858,
-                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "岩石" },
+                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "岩石",
+                 skillLabel: "能量填充M" },
     "太阳伊布": { prob_f: 0.164, e_f: 228.7, prob_s: 0.044, e_b: 143, e_s: 6858,
-                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "超能力" },
+                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "超能力",
+                 skillLabel: "能量填充M" },
     "音波龙":  { prob_f: 0.195, e_f: 420.0, prob_s: 0.048, e_b: 192, e_s: 6858,
-                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "龙" },
+                 skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "龙",
+                 skillLabel: "能量填充M" },
 };
 const BERRY_BOOST_MONS_DATA = {
     "蜥蜴王":  { prob_f: 0.107, e_f: 471.3, prob_s: 0.030, e_b: 165, e_s: 50,
-                 skillLevels: [15, 22, 29, 36, 43, 50], element: "草" },
+                 skillLevels: [15, 22, 29, 36, 43, 50], element: "草",
+                 skillLabel: "树果遽增" },
     "勇士雄鹰": { prob_f: 0.121, e_f: 466.7, prob_s: 0.035, e_b: 132, e_s: 50,
-                 skillLevels: [15, 22, 29, 36, 43, 50], element: "飞行" },
+                 skillLevels: [15, 22, 29, 36, 43, 50], element: "飞行",
+                 skillLabel: "树果遽增" },
     "谜拟Q":   { prob_f: 0.153, e_f: 357.0, prob_s: 0.035, e_b: 143, e_s: 41,
-                 skillLevels: [12, 18, 23, 29, 35, 41], element: "幽灵" },
+                 skillLevels: [12, 18, 23, 29, 35, 41], element: "幽灵",
+                 skillLabel: "画皮（树果遽增）",
+                 critRate: 0.185, critMultiplier: 3 },  // 暴击机制
 };
 const LEGENDARY_MONS_DATA = {
     "拉帝欧斯": { prob_f: 0.198, e_f: 256.6, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
