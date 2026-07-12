@@ -323,10 +323,11 @@
         }
         .skill-menu-title { font-size: 0.95em; font-weight: bold; margin-bottom: 6px; }
         .skill-menu-section { margin-bottom: 5px; }
-        .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+        .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; overflow: visible;}
         .skill-btn {
             padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75em;
             position: relative;
+            overflow: visible; 
         }
         .skill-btn.gold { background: #ffe082; }
         .skill-btn.blue { background: #bbdefb; }
@@ -473,7 +474,6 @@
 <script src="probability.js"></script>
 <script>
 // ========== 更新日志 ==========
-const UPDATE_LOG = [
 const UPDATE_LOG = [
     { version: 'V0.1.8.4', date: '2026-07-12', notes: [
         '修复副技能菜单角标反馈消失、无法顺序多选的严重bug。',
