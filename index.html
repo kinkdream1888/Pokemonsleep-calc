@@ -319,7 +319,7 @@
         }
         .skill-menu {
             background: white; border-radius: 10px; padding: 8px;
-            max-width: 330px; width: 95%; max-height: 80vh; overflow-y: auto;
+            max-width: min(330px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
         .skill-menu-title { font-size: 0.95em; font-weight: bold; margin-bottom: 6px; }
         .skill-menu-section { margin-bottom: 5px; }
@@ -365,7 +365,7 @@
         }
         .nature-menu {
             background: white; border-radius: 10px; padding: 8px;
-            max-width: 360px; width: 95%; max-height: 80vh; overflow-y: auto;
+            max-width: min(360px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
         .nature-group { margin-bottom: 3px; }
         .nature-group-title { font-weight: bold; margin-bottom: 2px; font-size: 0.75em; }
@@ -389,6 +389,18 @@
             font-size: 0.8em;
         }
         .page-btns button:disabled { background: #ccc; cursor: default; }
+                /* 移动端去除点击蓝框，电脑端保留键盘焦点轮廓 */
+        @media (hover: none) and (pointer: coarse) {
+            .skill-btn:focus,
+            .nature-btn:focus,
+            .skill-slot:focus,
+            .nature-display:focus,
+            .prob-btn:focus,
+            .btn:focus,
+            .btn-realistic:focus {
+                outline: none;
+            }
+        }
     </style>
 </head>
 <body>
