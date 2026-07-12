@@ -255,7 +255,7 @@
             gap: 10px;
             align-items: center;
         }
-        /* 副技能面板相关样式 */
+        /* 副技能面板样式 */
         .sub-skills-grid {
             display: flex;
             gap: 6px;
@@ -274,6 +274,10 @@
             background: #fafafa;
         }
         .skill-slot:hover { background: #e8f0fe; }
+        .skill-slot.filled { border-style: solid; }
+        .skill-slot.filled.gold { background: #ffe082; border-color: #f9a825; }
+        .skill-slot.filled.blue { background: #bbdefb; border-color: #1976d2; }
+        .skill-slot.filled.white { background: #f5f5f5; border-color: #9e9e9e; }
         .skill-menu-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 30;
@@ -294,6 +298,30 @@
         .skill-btn.white { background: #f5f5f5; }
         .skill-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .skill-clear-btn { margin-top: 8px; background: #e0e0e0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        /* 性格菜单样式 */
+        .nature-display {
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            min-width: 80px;
+            display: inline-block;
+            text-align: center;
+        }
+        .nature-menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 30;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .nature-menu {
+            background: white; border-radius: 10px; padding: 15px;
+            max-width: 500px; width: 95%; max-height: 80vh; overflow-y: auto;
+        }
+        .nature-group { margin-bottom: 10px; }
+        .nature-group-title { font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid #ddd; }
+        .nature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px; }
+        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 4px; cursor: pointer; font-size: 0.85em; }
+        .nature-btn:hover { background: #e0e0e0; }
         .page-btns {
             margin-top: 8px;
             display: flex;
@@ -317,7 +345,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.8</small>
+        <small>V0.1.8.1</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -356,7 +384,8 @@
 
     <div class="row">
         <label>选择性格:</label>
-        <select id="natureSelect"></select>
+        <div id="natureDisplay" class="nature-display" onclick="openNatureMenu()">坦率</div>
+        <select id="natureSelect" style="display:none;"></select>
     </div>
 
     <div class="checkbox-row" id="realisticRow">
@@ -399,27 +428,30 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.8.1', date: '2026-07-12', notes: [
+        '修复副技能格子样式（未选虚线/已选实线加底色）。',
+        '性格升级为分组二级菜单。',
+        '谜拟Q暴击机制实装。',
+        '大嘴娃/蝶结萌虻显示主技能标签。'
+    ]},
     { version: 'V0.1.8', date: '2026-07-12', notes: [
         '重大更新：补齐25个性格，副技能面板升级为5格二级菜单，捕捉概率智能计算更优组合。',
         '新增睡眠EXP、研究EXP、活力回复、梦之碎片、持有上限等副技能数据。'
     ]},
     { version: 'V0.1.7.5', date: '2026-07-12', notes: ['修复捕捉概率计算逻辑：从“恰好匹配”修正为“至少包含”。'] },
-    { version: 'V0.1.7.4', date: '2026-07-12', notes: [
-        '数据库重大修正：树果、食材能量、食材平均个数校准至游戏基础值。',
-        '修正谜拟Q、老翁龙属性错误。补充技能等级数据。'
-    ]},
-    { version: 'V0.1.7.3', date: '2026-07-12', notes: ['修复捕捉概率无法计算，模拟次数恢复100万。技能/食材型默认选项更名。'] },
-    { version: 'V0.1.7.2', date: '2026-07-12', notes: ['达克莱伊数据实装。幻兽改称全能型（幻兽）。捕捉概率对幻兽禁用。'] },
+    { version: 'V0.1.7.4', date: '2026-07-12', notes: ['数据库重大修正：树果、食材能量、食材平均个数校准至游戏基础值。'] },
+    { version: 'V0.1.7.3', date: '2026-07-12', notes: ['修复捕捉概率无法计算，模拟次数恢复100万。'] },
+    { version: 'V0.1.7.2', date: '2026-07-12', notes: ['达克莱伊数据实装。幻兽改称全能型。'] },
     { version: 'V0.1.7.1', date: '2026-07-12', notes: ['克雷色利亚数据实装。'] },
     { version: 'V0.1.7', date: '2026-07-12', notes: ['捕捉概率新增性格多选、模拟等级、公告翻页。'] },
-    { version: 'V0.1.6', date: '2026-07-12', notes: ['新增捕捉概率计算，技能型新增穿山王、岩殿居蟹。'] },
+    { version: 'V0.1.6', date: '2026-07-12', notes: ['新增捕捉概率计算。'] },
     { version: 'V0.1.5.3', date: '2026-07-12', notes: ['修复幻兽类型切换后性格锁定问题。'] },
     { version: 'V0.1.5.2', date: '2026-07-12', notes: ['界面优化：技能标签。幻兽锁定坦率。'] },
     { version: 'V0.1.5.1', date: '2026-07-12', notes: ['修正树果S倍率。新增克雷色利亚、达克莱伊占位。'] },
     { version: 'V0.1.5', date: '2026-07-12', notes: ['树果型基准纯白板，新增传说宝可梦类型。'] },
     { version: 'V0.1.4.11', date: '2026-07-11', notes: ['新增结果保存与对比。'] },
     { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能/食材概率副技能叠加错误。'] },
-    { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出，高亮数据。古月鸟/老翁龙改名。'] },
+    { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出，高亮数据。'] },
     { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化，修复精灵球变形。'] },
     { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：精灵球图标与背景图案。'] },
     { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化损耗提示。'] },
@@ -498,7 +530,7 @@ let maxSubs = 4;
 let currentType = '树果型';
 let savedHistory = [];
 
-// 初始化性格列表
+// 初始化性格隐藏下拉框和显示
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
     opt.value = nature;
@@ -506,6 +538,49 @@ for (let nature of Object.keys(NATURES)) {
     natureSelect.appendChild(opt);
 }
 natureSelect.value = '坦率';
+document.getElementById('natureDisplay').textContent = '坦率';
+
+function openNatureMenu() {
+    let overlay = document.createElement('div');
+    overlay.className = 'nature-menu-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+
+    let menu = document.createElement('div');
+    menu.className = 'nature-menu';
+
+    const groups = [
+        { title: '无增减', natures: ['坦率','勤奋','害羞','浮躁','认真'] },
+        { title: '加速 (+帮速)', natures: ['怕寂寞','勇敢','顽皮','固执'] },
+        { title: '加食材 (+食概)', natures: ['慢吞吞','冷静','内敛','马虎'] },
+        { title: '加技能 (+技概)', natures: ['自大','慎重','温顺','温和'] },
+        { title: '加经验', natures: ['天真','急躁','爽朗','胆小'] },
+        { title: '加活力', natures: ['乐天','悠闲','淘气','大胆'] }
+    ];
+
+    groups.forEach(group => {
+        let div = document.createElement('div');
+        div.className = 'nature-group';
+        div.innerHTML = `<div class="nature-group-title">${group.title}</div>`;
+        let grid = document.createElement('div');
+        grid.className = 'nature-grid';
+        group.natures.forEach(nat => {
+            let btn = document.createElement('button');
+            btn.className = 'nature-btn';
+            btn.textContent = nat;
+            btn.onclick = () => {
+                natureSelect.value = nat;
+                document.getElementById('natureDisplay').textContent = nat;
+                document.body.removeChild(overlay);
+            };
+            grid.appendChild(btn);
+        });
+        div.appendChild(grid);
+        menu.appendChild(div);
+    });
+
+    overlay.appendChild(menu);
+    document.body.appendChild(overlay);
+}
 
 // 初始化副技能面板
 renderSubSkillGrid();
@@ -550,7 +625,6 @@ function updateSkillTag() {
 
 function onTypeChange() {
     currentType = typeSelect.value;
-    // 不再需要 showBerryS 控制副技能显示，所有类型都显示5个格子
 
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
