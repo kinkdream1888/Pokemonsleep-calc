@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.3 角标与反馈修复版） ==========
+// ========== 副技能选择面板（V0.1.8.4 替换修复版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -82,28 +82,17 @@ function openSubSkillMenu(slotIndex, level) {
             btn.onclick = () => {
                 let existingIndex = selectedSkills.indexOf(skill);
                 if (existingIndex !== -1) {
+                    // 技能已被选中，取消选择
                     selectedSkills[existingIndex] = null;
-                    renderSubSkillGrid();
-                    updateAllMenuBadges(overlay);
-                    return;
-                }
-                if (selectedSkills[slotIndex] === null) {
+                } else {
+                    // 技能未被选中，放入当前格子（替换掉原有技能）
                     selectedSkills[slotIndex] = skill;
-                    renderSubSkillGrid();
-                    updateAllMenuBadges(overlay);
-                    if (selectedSkills.every(s => s !== null)) {
-                        document.body.removeChild(overlay);
-                    }
-                    return;
                 }
-                let emptyIndex = selectedSkills.findIndex(s => s === null);
-                if (emptyIndex !== -1) {
-                    selectedSkills[emptyIndex] = skill;
-                    renderSubSkillGrid();
-                    updateAllMenuBadges(overlay);
-                    if (selectedSkills.every(s => s !== null)) {
-                        document.body.removeChild(overlay);
-                    }
+                renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
+                // 如果所有格子都填满了，自动关闭菜单
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
                 }
             };
             grid.appendChild(btn);
