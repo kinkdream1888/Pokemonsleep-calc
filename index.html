@@ -151,19 +151,6 @@
             color: #555;
             white-space: nowrap;
         }
-        .sub-skills { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 6px; 
-            margin: 6px 0; 
-        }
-        .sub-skills label { 
-            display: flex; 
-            align-items: center; 
-            gap: 3px; 
-            font-size: 0.9em; 
-            white-space: nowrap; 
-        }
         .btn { 
             background: #3498db; 
             color: white; 
@@ -268,32 +255,45 @@
             gap: 10px;
             align-items: center;
         }
-        .nature-panel-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 20;
-            display: none;
-            justify-content: center;
+        /* 副技能面板相关样式 */
+        .sub-skills-grid {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0;
+        }
+        .skill-slot {
+            width: 80px;
+            height: 36px;
+            border: 1px dashed #aaa;
+            border-radius: 4px;
+            display: flex;
             align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            cursor: pointer;
+            background: #fafafa;
         }
-        .nature-panel {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            max-width: 400px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
+        .skill-slot:hover { background: #e8f0fe; }
+        .skill-menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 30;
+            display: flex; justify-content: center; align-items: center;
         }
-        .nature-panel h4 { margin-top: 0; }
-        .nature-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
+        .skill-menu {
+            background: white; border-radius: 10px; padding: 15px;
+            max-width: 450px; width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .nature-grid label { display: flex; align-items: center; gap: 4px; font-size: 0.85em; }
+        .skill-menu-title { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; }
+        .skill-menu-section { margin-bottom: 10px; }
+        .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .skill-btn {
+            padding: 6px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;
+        }
+        .skill-btn.gold { background: #ffe082; }
+        .skill-btn.blue { background: #bbdefb; }
+        .skill-btn.white { background: #f5f5f5; }
+        .skill-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .skill-clear-btn { margin-top: 8px; background: #e0e0e0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .page-btns {
             margin-top: 8px;
             display: flex;
@@ -317,7 +317,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.7.5</small>
+        <small>V0.1.8</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -349,10 +349,10 @@
         <span id="skillTag" class="skill-tag" style="display:none;"></span>
     </div>
 
-    <div class="note" id="subNote">※ 树果S为可选副技能，最多选4个</div>
+    <div class="note" id="subNote">※ 点击副技能格子进行选择，最多选4个或含树果S</div>
 
     <div class="row"><label>副技能:</label></div>
-    <div class="sub-skills" id="subCheckboxes"></div>
+    <div class="sub-skills-grid" id="subSkillGrid"></div>
 
     <div class="row">
         <label>选择性格:</label>
@@ -381,9 +381,7 @@
             <option value="4">70级(前4格)</option>
             <option value="3">50级(前3格)</option>
         </select>
-        <button class="prob-btn" style="background: #8e44ad; max-width: 120px;" onclick="openNaturePanel()">性格多选</button>
-        <span style="font-size: 0.7em; color: gray; margin-left: 5px;">（默认使用主性格）</span>
-        <span id="natureCount" style="font-size: 0.8em; color: gray;"></span>
+        <span style="font-size: 0.8em; color: gray;">（默认使用主性格）</span>
     </div>
     <div class="prob-result" id="probResult"></div>
 
@@ -394,127 +392,53 @@
     </div>
 </div>
 
-<!-- 性格多选面板 -->
-<div class="nature-panel-overlay" id="natureOverlay">
-    <div class="nature-panel">
-        <h4>选择可用性格（可多选）</h4>
-        <div class="nature-grid" id="natureGrid"></div>
-        <div style="margin-top: 10px; display: flex; gap: 6px; justify-content: flex-end;">
-            <button onclick="selectAllNatures()" style="font-size:0.8em;">全选</button>
-            <button onclick="deselectAllNatures()" style="font-size:0.8em;">取消全选</button>
-            <button onclick="closeNaturePanel()" style="font-size:0.8em;">确认</button>
-        </div>
-    </div>
-</div>
-
 <script src="data.js"></script>
 <script src="calculator.js"></script>
+<script src="subskill-panel.js"></script>
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
-    // ========== 0.1.x：网页工具时代 ==========
-    { version: 'V0.1.7.5', date: '2026-07-12', notes: [
-    '修复捕捉概率计算逻辑：从“恰好匹配”修正为“至少包含”，更符合实际出货体感。'
-]},
+    { version: 'V0.1.8', date: '2026-07-12', notes: [
+        '重大更新：补齐25个性格，副技能面板升级为5格二级菜单，捕捉概率智能计算更优组合。',
+        '新增睡眠EXP、研究EXP、活力回复、梦之碎片、持有上限等副技能数据。'
+    ]},
+    { version: 'V0.1.7.5', date: '2026-07-12', notes: ['修复捕捉概率计算逻辑：从“恰好匹配”修正为“至少包含”。'] },
     { version: 'V0.1.7.4', date: '2026-07-12', notes: [
-    '数据库重大修正：树果能量、食材能量、食材平均个数全部校准至游戏基础值。',
-    '修正谜拟Q、老翁龙属性错误；修正拉帝欧斯、克雷色利亚食材个数类型错误。',
-    '补充所有已实装宝可梦的技能等级数据（Lv.1~Lv.7），为金瓜子系统做准备。'
-]},
-    { version: 'V0.1.7.3', date: '2026-07-12', notes: [
-    '修复捕捉概率无法计算的问题。',
-    '模拟次数恢复为100万次。',
-    '技能型默认选项更名为“功能型”，食材型默认选项更名为“纯食材型”。'
-]},
-    { version: 'V0.1.7.2', date: '2026-07-12', notes: [
-    '达克莱伊数据实装，开放计算。',
-    '幻兽选项改名为“全能型（幻兽）”，捕捉概率对幻兽禁用。',
-    '性格多选增加默认说明。',
-    '新增食材精选S系列宝可梦（大嘴娃、蝶结萌虻、乌鸦头头），数据待补全。',
-    '新增传说宝可梦：雷公、水君、炎帝（帮手加速），数据待补全。'
-]},
-    { version: 'V0.1.7.1', date: '2026-07-12', notes: ['克雷色利亚数据实装，开放计算。'] },
-    { version: 'V0.1.7', date: '2026-07-12', notes: [
-        '捕捉概率新增性格多选、模拟等级（50/70级）功能。',
-        '更新公告支持翻页，每页6条。',
-        '概率计算更加贴近真实培养环境。'
+        '数据库重大修正：树果、食材能量、食材平均个数校准至游戏基础值。',
+        '修正谜拟Q、老翁龙属性错误。补充技能等级数据。'
     ]},
-    { version: 'V0.1.6', date: '2026-07-12', notes: [
-        '新增捕捉概率计算功能，支持锁金机制和食材AAA加权。',
-        '技能型新增穿山王、岩殿居蟹（食材精选S），数据待补全。',
-        '技能型可下拉选择特殊宝可梦，显示技能标签。'
-    ]},
-    { version: 'V0.1.5.2.1', date: '2026-07-12', notes: ['修复从幻兽类型切换到其他类型时性格被错误锁定的问题。'] },
-    { version: 'V0.1.5.2', date: '2026-07-12', notes: [
-        '界面优化：选择宝可梦时右侧动态显示技能标签，选项文字精简。',
-        '幻兽类型锁定性格为坦率。',
-        '食材型说明文字更新。'
-    ]},
-    { version: 'V0.1.5.1', date: '2026-07-12', notes: [
-        '修正树果型树果S倍率（从2.0修正为1.5，基础2果→3果）。',
-        '拉帝欧斯显示名称添加“流星群（树果遽增）”。',
-        '新增克雷色利亚（传说）、达克莱伊（幻兽），数据待补全。'
-    ]},
-    { version: 'V0.1.5', date: '2026-07-12', notes: [
-        '树果型基准改为纯白板，树果S成为可选副技能。',
-        '新增“传说宝可梦”类型，拉帝欧斯移入此分类，为后续神兽做准备。'
-    ]},
-    { version: 'V0.1.4.11', date: '2026-07-11', notes: ['新增结果保存与对比功能，支持最多10条历史记录。'] },
-    { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能概率/食材概率副技能叠加方式错误（应为相加而非相乘）。'] },
-    { version: 'V0.1.4.9', date: '2026-07-11', notes: [
-        '优化输出结果，简化文字叙述，高亮关键数据（理论蓝色，实战绿色）。',
-        '古月鸟/老翁龙选项改名为“料理成功S”。'
-    ]},
-    { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化：改为纯色背景+右下角精灵球水印，修复手机端精灵球变形。'] },
-    { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：增加精灵球图标与背景图案。'] },
-    { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化技能就绪待机损耗提示，统一为“损耗可能导致实际能量/次数低于理论值约2~4%”。'] },
-    { version: 'V0.1.4.5', date: '2026-07-11', notes: ['彻底修复实战估算损耗计算失效（理论倍率与实战估算分离）。'] },
-    { version: 'V0.1.4.4', date: '2026-07-11', notes: ['再次尝试修复实战估算损耗计算失效。'] },
-    { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复技能型、能量填充M、树果遽增、拉帝欧斯实战估算无效。'] },
-    { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算选项显示逻辑（树果型/食材型不显示）。'] },
-    { version: 'V0.1.4.1', date: '2026-07-11', notes: [
-        '双修食材型结果新增综合强度含义说明。',
-        '对照组专家面板增加配置描述。',
-        '修复普通食材型帮手奖励团队倍率缺失。'
-    ]},
-    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型（古月鸟、老翁龙），动态计算食材与技能产出，并与专家宝可梦对比。'] },
+    { version: 'V0.1.7.3', date: '2026-07-12', notes: ['修复捕捉概率无法计算，模拟次数恢复100万。技能/食材型默认选项更名。'] },
+    { version: 'V0.1.7.2', date: '2026-07-12', notes: ['达克莱伊数据实装。幻兽改称全能型（幻兽）。捕捉概率对幻兽禁用。'] },
+    { version: 'V0.1.7.1', date: '2026-07-12', notes: ['克雷色利亚数据实装。'] },
+    { version: 'V0.1.7', date: '2026-07-12', notes: ['捕捉概率新增性格多选、模拟等级、公告翻页。'] },
+    { version: 'V0.1.6', date: '2026-07-12', notes: ['新增捕捉概率计算，技能型新增穿山王、岩殿居蟹。'] },
+    { version: 'V0.1.5.3', date: '2026-07-12', notes: ['修复幻兽类型切换后性格锁定问题。'] },
+    { version: 'V0.1.5.2', date: '2026-07-12', notes: ['界面优化：技能标签。幻兽锁定坦率。'] },
+    { version: 'V0.1.5.1', date: '2026-07-12', notes: ['修正树果S倍率。新增克雷色利亚、达克莱伊占位。'] },
+    { version: 'V0.1.5', date: '2026-07-12', notes: ['树果型基准纯白板，新增传说宝可梦类型。'] },
+    { version: 'V0.1.4.11', date: '2026-07-11', notes: ['新增结果保存与对比。'] },
+    { version: 'V0.1.4.10', date: '2026-07-11', notes: ['修复技能/食材概率副技能叠加错误。'] },
+    { version: 'V0.1.4.9', date: '2026-07-11', notes: ['优化输出，高亮数据。古月鸟/老翁龙改名。'] },
+    { version: 'V0.1.4.8', date: '2026-07-11', notes: ['背景优化，修复精灵球变形。'] },
+    { version: 'V0.1.4.7', date: '2026-07-11', notes: ['界面美化：精灵球图标与背景图案。'] },
+    { version: 'V0.1.4.6', date: '2026-07-11', notes: ['优化损耗提示。'] },
+    { version: 'V0.1.4.5', date: '2026-07-11', notes: ['彻底修复实战估算失效。'] },
+    { version: 'V0.1.4.4', date: '2026-07-11', notes: ['再次修复实战估算失效。'] },
+    { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复实战估算无效。'] },
+    { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算显示逻辑。'] },
+    { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型说明强化。'] },
+    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增双修食材型。'] },
     { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
-    { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误（蜥蜴王、勇士雄鹰、谜拟Q）。'] },
-    { version: 'V0.1.1', date: '2026-07-10', notes: [
-        '初始网页版发布：支持六大类型效率计算与实战估算。',
-        '帮手奖励团队倍率与溢出分析。'
-    ]},
-
-    // ========== 0.0.x：Python 验证时代 ==========
+    { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算。'] },
+    { version: 'V0.1.1', date: '2026-07-10', notes: ['初始网页版发布。'] },
     { version: 'V0.0.8', date: '2026-07-10', notes: ['已完成部署，生成在线链接。'] },
-    { version: 'V0.0.7', date: '2026-07-10', notes: [
-        '完成所有类型（树果、食材、技能、充能、遽增、拉帝欧斯）的 HTML 移植。',
-        '增加帮手奖励团队倍率与溢出分析。'
-    ]},
-    { version: 'V0.0.6', date: '2026-07-10', notes: [
-        '确定“帮速为王，概率有损”筛选原则。',
-        '有树果S前提下，实测验证高帮速配置因待机损耗更低而实现总能量反超。'
-    ]},
-    { version: 'V0.0.5', date: '2026-07-10', notes: [
-        '发现并量化“技能就绪待机损耗”。',
-        '引入实战估算兑现系数，精准匹配外部模拟数据。'
-    ]},
-    { version: 'V0.0.4', date: '2026-07-10', notes: [
-        '成功验证太阳伊布、蜥蜴王、冰伊布等样本，公式准确无误。',
-        '确立充能型/树果递增型统一计算公式：M_h × (Rb·Mb + Rs·Mp + Rf)。'
-    ]},
-    { version: 'V0.0.3', date: '2026-07-10', notes: [
-        '用 Python 实现效率计算器原型。',
-        '支持副技能和性格勾选，自动计算综合倍率。'
-    ]},
-    { version: 'V0.0.2', date: '2026-07-10', notes: [
-        '研究充能型技能宝可梦（太阳伊布），引入树果S与能量占比。',
-        '推导出总倍率 = M_h × (Rb·Mb + Rs·Mp + Rf)。'
-    ]},
-    { version: 'V0.0.1', date: '2026-04-03', notes: [
-        '确立基础效率公式：最终效率 = 基础 × 副技能倍率 × 性格倍率。',
-        '完成树果型、食材型、技能型词条倍率定义（如帮M=1.1628）。'
-    ]},
+    { version: 'V0.0.7', date: '2026-07-10', notes: ['HTML移植，帮手奖励团队倍率。'] },
+    { version: 'V0.0.6', date: '2026-07-10', notes: ['确定帮速为王原则。'] },
+    { version: 'V0.0.5', date: '2026-07-10', notes: ['发现并量化待机损耗。'] },
+    { version: 'V0.0.4', date: '2026-07-10', notes: ['验证太阳伊布等样本，确立统一公式。'] },
+    { version: 'V0.0.3', date: '2026-07-10', notes: ['Python实现原型。'] },
+    { version: 'V0.0.2', date: '2026-07-10', notes: ['推导充能型总倍率公式。'] },
+    { version: 'V0.0.1', date: '2026-04-03', notes: ['确立基础效率公式。'] },
 ];
 
 const announceList = document.getElementById('announceList');
@@ -563,19 +487,17 @@ const pokeRow = document.getElementById('pokeRow');
 const pokeSelect = document.getElementById('pokeSelect');
 const skillTag = document.getElementById('skillTag');
 const subNote = document.getElementById('subNote');
-const subCheckboxes = document.getElementById('subCheckboxes');
 const natureSelect = document.getElementById('natureSelect');
 const resultBox = document.getElementById('resultBox');
 const realisticCheckbox = document.getElementById('realisticModeCheckbox');
 const realisticRow = document.getElementById('realisticRow');
 const historyList = document.getElementById('historyList');
-const natureCountSpan = document.getElementById('natureCount');
 
 let maxSubs = 4;
 let currentType = '树果型';
 let savedHistory = [];
-let selectedNatures = [];
 
+// 初始化性格列表
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
     opt.value = nature;
@@ -584,21 +506,8 @@ for (let nature of Object.keys(NATURES)) {
 }
 natureSelect.value = '坦率';
 
-function renderSubCheckboxes(showBerryS) {
-    subCheckboxes.innerHTML = '';
-    for (let name in SUB_SKILLS) {
-        if (name === '树果S' && !showBerryS) continue;
-        let label = document.createElement('label');
-        let cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = name;
-        cb.id = 'sub_' + name;
-        cb.addEventListener('change', onSubChange);
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(name));
-        subCheckboxes.appendChild(label);
-    }
-}
+// 初始化副技能面板
+renderSubSkillGrid();
 
 function updateRealisticVisibility() {
     let calcType = typeSelect.value;
@@ -640,10 +549,8 @@ function updateSkillTag() {
 
 function onTypeChange() {
     currentType = typeSelect.value;
-    let showBerryS = ['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType);
-    renderSubCheckboxes(showBerryS);
+    // 不再需要 showBerryS 控制副技能显示，所有类型都显示5个格子
 
-    // 填充宝可梦列表
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
@@ -720,16 +627,15 @@ function onTypeChange() {
 
     maxSubs = 4;
     if (['树果型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(currentType)) {
-        subNote.textContent = '※ 树果S为可选副技能（占用1个副技能位），最多选4个（含树果S）';
+        subNote.textContent = '※ 点击副技能格子选择，最多选4个（含树果S）';
     } else if (currentType === '食材型') {
-        subNote.textContent = '※ 不附带树果S，最多选4个副技能。料理成功S、食材精选S宝可梦可与专家对比。';
+        subNote.textContent = '※ 点击副技能格子选择，最多选4个。料理成功S、食材精选S宝可梦可与专家对比。';
     } else {
-        subNote.textContent = '※ 最多选择4个副技能';
+        subNote.textContent = '※ 点击副技能格子选择，最多选4个';
     }
 
     updateRealisticVisibility();
     updateSkillTag();
-    enforceSubLimit();
     resultBox.innerHTML = '';
     removeSaveButton();
 }
@@ -739,97 +645,48 @@ pokeSelect.addEventListener('change', () => {
     updateSkillTag();
 });
 
-function onSubChange() { enforceSubLimit(); }
-
-function enforceSubLimit() {
-    let checked = getSelectedSubs();
-    if (checked.length > maxSubs) {
-        let last = checked[checked.length-1];
-        document.getElementById('sub_' + last).checked = false;
-        alert(`当前类型最多选择${maxSubs}个副技能！`);
-    }
-}
-
-function getSelectedSubs() {
-    let subs = [];
-    let checkboxes = subCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
-    checkboxes.forEach(cb => subs.push(cb.value));
-    return subs;
-}
-
 typeSelect.addEventListener('change', onTypeChange);
-renderSubCheckboxes(true);
-onTypeChange();
 
-// ========== 性格多选面板 ==========
-function buildNaturePanel() {
-    const grid = document.getElementById('natureGrid');
-    grid.innerHTML = '';
-    for (let nature of Object.keys(NATURES)) {
-        let label = document.createElement('label');
-        let cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.value = nature;
-        cb.checked = selectedNatures.includes(nature);
-        cb.addEventListener('change', () => {
-            if (cb.checked) {
-                if (!selectedNatures.includes(nature)) selectedNatures.push(nature);
-            } else {
-                selectedNatures = selectedNatures.filter(n => n !== nature);
-            }
-            updateNatureCount();
-        });
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(nature));
-        grid.appendChild(label);
-    }
-}
-function openNaturePanel() {
-    document.getElementById('natureOverlay').style.display = 'flex';
-    buildNaturePanel();
-}
-function closeNaturePanel() {
-    document.getElementById('natureOverlay').style.display = 'none';
-    updateNatureCount();
-}
-function selectAllNatures() {
-    selectedNatures = Object.keys(NATURES);
-    buildNaturePanel();
-    updateNatureCount();
-}
-function deselectAllNatures() {
-    selectedNatures = [];
-    buildNaturePanel();
-    updateNatureCount();
-}
-function updateNatureCount() {
-    if (selectedNatures.length === 0) {
-        natureCountSpan.textContent = '（使用主性格）';
-    } else {
-        natureCountSpan.textContent = `已选 ${selectedNatures.length}/25`;
-    }
-}
-
-// 捕捉概率计算（V0.1.7.5 修正版 - 至少包含逻辑）
+// ========== 捕捉概率计算（V0.1.8 智能版） ==========
 function calculateProbability() {
     let selectedSubs = getSelectedSubs();
-    let natureProb = 0;
-    if (selectedNatures.length > 0) {
-        natureProb = selectedNatures.length / 25;
-    } else {
-        natureProb = 1/25;
+    if (selectedSubs.length === 0) {
+        document.getElementById('probResult').innerHTML = '※ 请至少选择一个副技能。';
+        document.getElementById('probResult').style.display = 'block';
+        return;
     }
+
     let lockGold = parseInt(document.getElementById('lockGold').value);
     let simSlots = parseInt(document.getElementById('simLevel').value);
     let calcType = typeSelect.value;
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
-    // 幻兽拦截
     if (calcType === '幻兽') {
         document.getElementById('probResult').innerHTML = '※ 幻兽副技能需使用灵感种子刷新，因此暂时无法计算';
         document.getElementById('probResult').style.display = 'block';
         return;
     }
+
+    // 自动计算更优性格概率
+    let currentNature = natureSelect.value;
+    let currentNatureInfo = NATURES[currentNature];
+    let betterCount = 0;
+    for (let n of Object.keys(NATURES)) {
+        let info = NATURES[n];
+        let currentTotal, natureTotal;
+        if (calcType === '树果型') {
+            currentTotal = currentNatureInfo.speed;
+            natureTotal = info.speed;
+        } else if (calcType === '食材型') {
+            currentTotal = currentNatureInfo.speed * currentNatureInfo.food;
+            natureTotal = info.speed * info.food;
+        } else {
+            currentTotal = currentNatureInfo.speed * currentNatureInfo.skill;
+            natureTotal = info.speed * info.skill;
+        }
+        if (natureTotal >= currentTotal) betterCount++;
+    }
+    let natureProb = betterCount / 25;
 
     const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
     const BLUE_SKILLS = ["技能等级S", "技概M", "帮M", "食概M", "持有上限L", "持有上限M"];
@@ -846,7 +703,7 @@ function calculateProbability() {
 
     const targetSkills = selectedSubs.filter(s => s in WEIGHTS);
     if (targetSkills.length > simSlots) {
-        document.getElementById('probResult').innerHTML = `<b>错误：</b>目标技能数超过可用格数（${simSlots}格），无法出现。`;
+        document.getElementById('probResult').innerHTML = `<b>错误：</b>目标技能数超过可用格数（${simSlots}格）。`;
         document.getElementById('probResult').style.display = 'block';
         return;
     }
@@ -881,13 +738,10 @@ function calculateProbability() {
             pool.splice(pool.indexOf(pickedSkill), 1);
         }
 
-        // 检查前四格是否至少包含所有目标技能（顺序无关）
+        // 至少包含所有目标技能
         let foundAll = true;
         for (let ts of targetSkills) {
-            if (!chosen.includes(ts)) {
-                foundAll = false;
-                break;
-            }
+            if (!chosen.includes(ts)) { foundAll = false; break; }
         }
         if (foundAll) successCount++;
     }
@@ -899,17 +753,16 @@ function calculateProbability() {
         foodNote = '\n※ 已计入食材组合 AAA 的概率 (1/9)。';
     }
     let oneOver = Math.round(1 / (prob / 100));
-    let natureDesc = selectedNatures.length > 0 ? `${selectedNatures.length}个性格` : natureSelect.value;
     let resultText = `【捕捉概率估算】
 副技能: ${selectedSubs.join(', ')}
-性格条件: ${natureDesc} (概率 ${natureProb.toFixed(4)})
+性格条件: 基于 ${currentNature}，更优性格共 ${betterCount} 个 (概率 ${natureProb.toFixed(4)})
 模拟等级: ${simSlots === 3 ? '50级（前3格）' : '70级（前4格）'}
 锁金数: ${lockGold}
 近似概率: ${prob.toFixed(6)}% (约 1/${oneOver})
 ${foodNote}
 ${selectedSubs.some(s => s.endsWith('S')) ? '※ 若出现S级技能，可使用银瓜子升级至M。' : ''}
 ※ 基于100万次模拟，前${simSlots}格无放回抽取。
-※ 概率表示“至少包含”指定副技能组合的出货率。`;
+※ 概率表示“至少包含”指定副技能组合，并涵盖所有更优性格的出货率。`;
 
     document.getElementById('probResult').innerHTML = resultText.replace(/\n/g, '<br>');
     document.getElementById('probResult').style.display = 'block';
@@ -980,6 +833,7 @@ function clearHistory() {
     }
 }
 
+// ========== 效率计算调用包装 ==========
 const originalCalculate = calculate;
 calculate = function() {
     originalCalculate();
