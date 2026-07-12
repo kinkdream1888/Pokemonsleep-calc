@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.2 修复版） ==========
+// ========== 副技能选择面板（V0.1.8.3 角标即时反馈版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -55,7 +55,7 @@ function openSubSkillMenu(slotIndex, level) {
 
     let title = document.createElement('div');
     title.className = 'skill-menu-title';
-    title.textContent = '选择副技能（可连续点选，再次点击取消）';
+    title.textContent = `请选择等级：${level} 的副技能`;
     menu.appendChild(title);
 
     const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
@@ -67,34 +67,40 @@ function openSubSkillMenu(slotIndex, level) {
     GOLD_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn gold';
+        btn.style.position = 'relative';
+        btn.textContent = skill;
+        let badge = document.createElement('span');
+        badge.className = 'menu-badge';
+        badge.style.display = 'none';
         let slotLevel = getSlotLevel(skill);
         if (slotLevel !== null) {
-            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
-            btn.style.background = '#e0e0e0';
-        } else {
-            btn.textContent = skill;
+            badge.textContent = slotLevel;
+            badge.style.display = 'inline-block';
         }
+        btn.appendChild(badge);
         btn.onclick = () => {
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
+                // 更新菜单内所有角标
+                updateAllMenuBadges(overlay);
                 return;
             }
-            // 优先填入当前点击的格子
             if (selectedSkills[slotIndex] === null) {
                 selectedSkills[slotIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
                 return;
             }
-            // 如果当前格子已被占用，找第一个空位
             let emptyIndex = selectedSkills.findIndex(s => s === null);
             if (emptyIndex !== -1) {
                 selectedSkills[emptyIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
@@ -114,23 +120,29 @@ function openSubSkillMenu(slotIndex, level) {
     BLUE_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn blue';
+        btn.style.position = 'relative';
+        btn.textContent = skill;
+        let badge = document.createElement('span');
+        badge.className = 'menu-badge';
+        badge.style.display = 'none';
         let slotLevel = getSlotLevel(skill);
         if (slotLevel !== null) {
-            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
-            btn.style.background = '#d0d0d0';
-        } else {
-            btn.textContent = skill;
+            badge.textContent = slotLevel;
+            badge.style.display = 'inline-block';
         }
+        btn.appendChild(badge);
         btn.onclick = () => {
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 return;
             }
             if (selectedSkills[slotIndex] === null) {
                 selectedSkills[slotIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
@@ -140,6 +152,7 @@ function openSubSkillMenu(slotIndex, level) {
             if (emptyIndex !== -1) {
                 selectedSkills[emptyIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
@@ -159,23 +172,29 @@ function openSubSkillMenu(slotIndex, level) {
     WHITE_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn white';
+        btn.style.position = 'relative';
+        btn.textContent = skill;
+        let badge = document.createElement('span');
+        badge.className = 'menu-badge';
+        badge.style.display = 'none';
         let slotLevel = getSlotLevel(skill);
         if (slotLevel !== null) {
-            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
-            btn.style.background = '#e8e8e8';
-        } else {
-            btn.textContent = skill;
+            badge.textContent = slotLevel;
+            badge.style.display = 'inline-block';
         }
+        btn.appendChild(badge);
         btn.onclick = () => {
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 return;
             }
             if (selectedSkills[slotIndex] === null) {
                 selectedSkills[slotIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
@@ -185,6 +204,7 @@ function openSubSkillMenu(slotIndex, level) {
             if (emptyIndex !== -1) {
                 selectedSkills[emptyIndex] = skill;
                 renderSubSkillGrid();
+                updateAllMenuBadges(overlay);
                 if (selectedSkills.every(s => s !== null)) {
                     document.body.removeChild(overlay);
                 }
@@ -203,6 +223,7 @@ function openSubSkillMenu(slotIndex, level) {
     clearAllBtn.onclick = () => {
         selectedSkills.fill(null);
         renderSubSkillGrid();
+        updateAllMenuBadges(overlay);
     };
     let closeBtn = document.createElement('button');
     closeBtn.className = 'skill-close-btn';
@@ -214,4 +235,20 @@ function openSubSkillMenu(slotIndex, level) {
 
     overlay.appendChild(menu);
     document.body.appendChild(overlay);
+}
+
+function updateAllMenuBadges(overlay) {
+    let buttons = overlay.querySelectorAll('.skill-btn');
+    buttons.forEach(btn => {
+        let skillName = btn.textContent.replace(/^\d+$/, '').trim();
+        let badge = btn.querySelector('.menu-badge');
+        if (!badge) return;
+        let slotLevel = getSlotLevel(skillName);
+        if (slotLevel !== null) {
+            badge.textContent = slotLevel;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
 }
