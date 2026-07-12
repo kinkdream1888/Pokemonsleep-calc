@@ -163,6 +163,40 @@
             max-width: 200px;
         }
         .btn:hover { background: #2980b9; }
+                .btn-realistic {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .btn-realistic.active { background: #27ae60; }
+        .calc-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .realistic-hint {
+            font-size: 0.75em;
+            color: gray;
+            margin-left: 5px;
+        }
+        .nature-effect-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-left: 8px;
+            font-size: 0.75em;
+            color: #555;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
         .result { 
             background: #f9f9f9; 
             border: 1px solid #ddd; 
@@ -345,7 +379,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.8.1</small>
+        <small>V0.1.8.2</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -385,15 +419,15 @@
     <div class="row">
         <label>选择性格:</label>
         <div id="natureDisplay" class="nature-display" onclick="openNatureMenu()">坦率</div>
+        <span id="natureEffectTag" class="nature-effect-tag"></span>
         <select id="natureSelect" style="display:none;"></select>
     </div>
 
-    <div class="checkbox-row" id="realisticRow">
-        <input type="checkbox" id="realisticModeCheckbox">
-        <label for="realisticModeCheckbox">实战估算（考虑技能打折）</label>
+    <div class="calc-buttons">
+        <button class="btn" onclick="calculate()">计算效率</button>
+        <button class="btn-realistic" id="realisticBtn" onclick="toggleRealistic()">实战预估</button>
+        <span class="realistic-hint">技能就绪的待机损耗</span>
     </div>
-
-    <button class="btn" onclick="calculate()">计算效率</button>
 
     <div class="result" id="resultBox"></div>
 
@@ -428,6 +462,11 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.8.2', date: '2026-07-12', notes: [
+        '副技能菜单支持连续点选自动填充，等级角标显示。',
+        '性格菜单用词专业化，增加效果标签（绿箭头/红箭头）。',
+        '实战预估改为按钮样式，界面更整洁。'
+    ]},
     { version: 'V0.1.8.1', date: '2026-07-12', notes: [
         '修复副技能格子样式（未选虚线/已选实线加底色）。',
         '性格升级为分组二级菜单。',
@@ -522,13 +561,14 @@ const skillTag = document.getElementById('skillTag');
 const subNote = document.getElementById('subNote');
 const natureSelect = document.getElementById('natureSelect');
 const resultBox = document.getElementById('resultBox');
-const realisticCheckbox = document.getElementById('realisticModeCheckbox');
-const realisticRow = document.getElementById('realisticRow');
+const realisticBtn = document.getElementById('realisticBtn');
 const historyList = document.getElementById('historyList');
+const natureEffectTag = document.getElementById('natureEffectTag');
 
 let maxSubs = 4;
 let currentType = '树果型';
 let savedHistory = [];
+let useRealistic = false;
 
 // 初始化性格隐藏下拉框和显示
 for (let nature of Object.keys(NATURES)) {
@@ -549,12 +589,12 @@ function openNatureMenu() {
     menu.className = 'nature-menu';
 
     const groups = [
-        { title: '无增减', natures: ['坦率','勤奋','害羞','浮躁','认真'] },
-        { title: '加速 (+帮速)', natures: ['怕寂寞','勇敢','顽皮','固执'] },
-        { title: '加食材 (+食概)', natures: ['慢吞吞','冷静','内敛','马虎'] },
-        { title: '加技能 (+技概)', natures: ['自大','慎重','温顺','温和'] },
-        { title: '加经验', natures: ['天真','急躁','爽朗','胆小'] },
-        { title: '加活力', natures: ['乐天','悠闲','淘气','大胆'] }
+        { title: '没有性格带来的影响', natures: ['坦率','勤奋','害羞','浮躁','认真'] },
+        { title: '帮忙速度', natures: ['怕寂寞','勇敢','顽皮','固执'] },
+        { title: '食材概率', natures: ['慢吞吞','冷静','内敛','马虎'] },
+        { title: '技能概率', natures: ['自大','慎重','温顺','温和'] },
+        { title: 'EXP获得量', natures: ['天真','急躁','爽朗','胆小'] },
+        { title: '活力回复量', natures: ['乐天','悠闲','淘气','大胆'] }
     ];
 
     groups.forEach(group => {
@@ -569,7 +609,7 @@ function openNatureMenu() {
             btn.textContent = nat;
             btn.onclick = () => {
                 natureSelect.value = nat;
-                document.getElementById('natureDisplay').textContent = nat;
+                updateNatureDisplay();
                 document.body.removeChild(overlay);
             };
             grid.appendChild(btn);
@@ -586,22 +626,7 @@ function openNatureMenu() {
 renderSubSkillGrid();
 
 function updateRealisticVisibility() {
-    let calcType = typeSelect.value;
-    let show = false;
-    if (['技能型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(calcType)) {
-        show = true;
-    } else if (calcType === '食材型') {
-        let poke = pokeSelect.value;
-        if (poke && HYBRID_FOOD_MONS_DATA[poke]) {
-            show = true;
-        }
-    }
-    if (show) {
-        realisticRow.style.display = 'flex';
-    } else {
-        realisticRow.style.display = 'none';
-        realisticCheckbox.checked = false;
-    }
+    // 实战预估按钮始终显示，无需控制显隐
 }
 
 function updateSkillTag() {
@@ -621,6 +646,40 @@ function updateSkillTag() {
         skillTag.textContent = SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
     }
+}
+function getNatureEffect(nature) {
+    const effects = {
+        '怕寂寞': { pos: '帮忙速度', neg: '活力回复量' },
+        '勇敢': { pos: '帮忙速度', neg: 'EXP获得量' },
+        '顽皮': { pos: '帮忙速度', neg: '技能概率' },
+        '固执': { pos: '帮忙速度', neg: '食材概率' },
+        '慢吞吞': { pos: '食材概率', neg: '活力回复量' },
+        '冷静': { pos: '食材概率', neg: 'EXP获得量' },
+        '内敛': { pos: '食材概率', neg: '帮忙速度' },
+        '马虎': { pos: '食材概率', neg: '技能概率' },
+        '自大': { pos: '技能概率', neg: 'EXP获得量' },
+        '慎重': { pos: '技能概率', neg: '食材概率' },
+        '温顺': { pos: '技能概率', neg: '活力回复量' },
+        '温和': { pos: '技能概率', neg: '帮忙速度' },
+        '天真': { pos: 'EXP获得量', neg: '食材概率' },
+        '急躁': { pos: 'EXP获得量', neg: '活力回复量' },
+        '爽朗': { pos: 'EXP获得量', neg: '技能概率' },
+        '胆小': { pos: 'EXP获得量', neg: '帮忙速度' },
+        '乐天': { pos: '活力回复量', neg: '食材概率' },
+        '悠闲': { pos: '活力回复量', neg: 'EXP获得量' },
+        '淘气': { pos: '活力回复量', neg: '技能概率' },
+        '大胆': { pos: '活力回复量', neg: '帮忙速度' },
+    };
+    if (effects[nature]) {
+        return `<span style="color:#27ae60;">▲</span>${effects[nature].pos} <span style="color:#e74c3c;">▼</span>${effects[nature].neg}`;
+    }
+    return '无增减';
+}
+
+function updateNatureDisplay() {
+    let nat = natureSelect.value;
+    natureDisplay.textContent = nat;
+    natureEffectTag.innerHTML = getNatureEffect(nat);
 }
 
 function onTypeChange() {
@@ -723,6 +782,16 @@ pokeSelect.addEventListener('change', () => {
 typeSelect.addEventListener('change', onTypeChange);
 
 // ========== 历史记录与保存 ==========
+function toggleRealistic() {
+    useRealistic = !useRealistic;
+    if (useRealistic) {
+        realisticBtn.classList.add('active');
+        realisticBtn.textContent = '实战预估 ✓';
+    } else {
+        realisticBtn.classList.remove('active');
+        realisticBtn.textContent = '实战预估';
+    }
+}
 function removeSaveButton() {
     let oldBtn = document.getElementById('saveResultBtn');
     if (oldBtn) oldBtn.remove();
