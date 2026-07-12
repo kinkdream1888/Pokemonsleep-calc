@@ -60,6 +60,39 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     } else if (calcType === '技能型') {
         total = M_h * M_p;
         improve = (total - 1) * 100;
+    } else if (calcType === '树果遽增' && pokemonName === '谜拟Q') {
+        let data = BERRY_BOOST_MONS_DATA['谜拟Q'];
+        let baseInterval = data.interval * 0.862 * 0.45;
+        let baseHelps = 86400 / baseInterval;
+
+        // 白板
+        let dailyHelpsBase = baseHelps * 1.0;
+        let skillProbBase = data.prob_s * 1.0;
+        let dailySkillBase = dailyHelpsBase * skillProbBase;
+        let triggerBase = 1 - Math.pow(1 - data.critRate, dailySkillBase);
+        let skillBerriesBase = data.e_s * (dailySkillBase + triggerBase * 2);
+
+        let p_f_base = Math.min(data.prob_f * 1.0, 1.0);
+        let berryPartBase = (1 - p_f_base) * 1 * data.e_b;
+        let foodPartBase = p_f_base * data.e_f;
+        let E_base = (86400 / baseInterval) * (berryPartBase + foodPartBase) + skillBerriesBase * data.e_b;
+
+        // 配置
+        let dailyHelpsCfg = baseHelps * M_h;
+        let skillProbCfg = data.prob_s * M_p;
+        let dailySkillCfg = dailyHelpsCfg * skillProbCfg;
+        let triggerCfg = 1 - Math.pow(1 - data.critRate, dailySkillCfg);
+        let skillBerriesCfg = data.e_s * (dailySkillCfg + triggerCfg * 2);
+
+        let p_f_cfg = Math.min(data.prob_f * M_f, 1.0);
+        let berryPartCfg = (1 - p_f_cfg) * berryMult * data.e_b;
+        let foodPartCfg = p_f_cfg * data.e_f;
+        let E_config = M_h * (86400 / baseInterval) * (berryPartCfg + foodPartCfg) + skillBerriesCfg * data.e_b;
+
+        total = E_config / E_base;
+        improve = (total - 1) * 100;
+        return { total: total.toFixed(4), improve: improve.toFixed(2), M_h: M_h.toFixed(4), M_p: M_p.toFixed(4), M_f: M_f.toFixed(4) };
+
     } else if (calcType === '能量填充M' || calcType === '树果遽增' || calcType === '传说宝可梦' || calcType === '幻兽') {
         let dataObj;
         if (calcType === '能量填充M') dataObj = ENERGY_MONS_DATA[pokemonName];
@@ -155,7 +188,7 @@ function calculate() {
             let totalSleep = foodRatio + skillRatioSleep;
 
             let lines = [];
-            lines.push(`类型: 食材型 (${pokeValue}·料理成功S)`);
+            lines.push(`类型: 食材型 (${pokeValue}·${HYBRID_FOOD_MONS_DATA[pokeValue].skillLabel})`);
             lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
             lines.push(`M_h: ${out.M_h.toFixed(4)} | M_f: ${out.M_f.toFixed(4)} | M_p: ${out.M_p.toFixed(4)}${useRealistic ? ' (打折)' : ''}`);
             lines.push('');
