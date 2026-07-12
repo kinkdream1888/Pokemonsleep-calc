@@ -72,7 +72,6 @@ function openSubSkillMenu(slotIndex, level) {
             let badge = document.createElement('span');
             badge.className = 'menu-badge';
             badge.style.display = 'none';
-            // 初始设置角标
             let slotLevel = getSlotLevel(skill);
             if (slotLevel !== null) {
                 badge.textContent = slotLevel;
