@@ -319,13 +319,13 @@
         }
         .skill-menu {
             background: white; border-radius: 10px; padding: 8px;
-            max-width: min(330px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
+            max-width: min(365px, 67.5vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
         .skill-menu-title { font-size: 1em; font-weight: bold; margin-bottom: 6px; }
         .skill-menu-section { margin-bottom: 5px; }
         .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; overflow: visible; }
         .skill-btn {
-            padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;
+            padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;
             position: relative; overflow: visible; 
         }
         .skill-btn.gold { background: #ffe082; }
@@ -364,12 +364,12 @@
         }
         .nature-menu {
             background: white; border-radius: 10px; padding: 8px;
-            max-width: min(360px, 90vw); width: 95%; max-height: 80vh; overflow-y: auto;
+            max-width: min(395px, 67.5vw); width: 95%; max-height: 80vh; overflow-y: auto;
         }
         .nature-group { margin-bottom: 3px; }
         .nature-group-title { font-weight: bold; margin-bottom: 2px; font-size: 0.8em; }
         .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
-        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 3px; cursor: pointer; font-size: 0.75em; }
+        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 3px; cursor: pointer; font-size: 0.8em; }
         .nature-btn:hover { background: #e0e0e0; }
         .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 6px; }
         .page-btns {
@@ -409,7 +409,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.8.4</small>
+        <small>V0.1.8.5</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -488,6 +488,10 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.8.5', date: '2026-07-12', notes: [
+        '字体略微增大，副技能/性格菜单宽度更紧凑。',
+        '公告栏修复为按实际行数分页，每页约18行。'
+    ]},
     { version: 'V0.1.8.4', date: '2026-07-12', notes: [
         '修复副技能菜单角标反馈消失、无法顺序多选的严重bug。',
         '移除主界面副技能格子角标。',
@@ -553,13 +557,13 @@ const announceList = document.getElementById('announceList');
 const announcePages = document.getElementById('announcePages');
 const MAX_LINES_PER_PAGE = 18;
 let currentAnnouncePage = 0;
-let totalPages = 1;
 let pages = [];
 
 function buildPages() {
     let result = [];
     let currentPage = [];
     let currentLines = 0;
+    // 用隐藏元素测量行数
     let tempDiv = document.createElement('div');
     tempDiv.style.cssText = 'position:absolute;visibility:hidden;width:' + announceList.clientWidth + 'px;font-size:0.85em;line-height:1.5;';
     document.body.appendChild(tempDiv);
@@ -569,7 +573,7 @@ function buildPages() {
         let li = document.createElement('li');
         li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
         tempDiv.appendChild(li);
-        let entryLines = Math.ceil(tempDiv.offsetHeight / 18);
+        let entryLines = Math.ceil(tempDiv.offsetHeight / 18); // 约18px行高
 
         if (currentLines + entryLines > MAX_LINES_PER_PAGE && currentPage.length > 0) {
             result.push(currentPage);
@@ -586,7 +590,6 @@ function buildPages() {
 
 function renderAnnouncePage(page) {
     if (pages.length === 0) pages = buildPages();
-    totalPages = pages.length;
     let pageItems = pages[page] || [];
     announceList.innerHTML = '';
     pageItems.forEach(log => {
@@ -595,7 +598,7 @@ function renderAnnouncePage(page) {
         announceList.appendChild(li);
     });
     announcePages.innerHTML = '';
-    for (let i = 0; i < totalPages; i++) {
+    for (let i = 0; i < pages.length; i++) {
         let btn = document.createElement('button');
         btn.textContent = i + 1;
         btn.disabled = (i === page);
@@ -613,7 +616,7 @@ function toggleAnnounce() {
         panel.style.display = 'none';
     } else {
         panel.style.display = 'block';
-        pages = buildPages();
+        pages = buildPages(); // 打开时重新计算分页
         currentAnnouncePage = 0;
         renderAnnouncePage(0);
     }
