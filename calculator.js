@@ -312,22 +312,18 @@ function calculate() {
     resultBox.innerHTML = lines.join('<br>');
 }
 // ========== 产能计算 ==========
-// 完整的食材能量数据库（基于你提供的19种食材）
 const FOOD_ENERGY_DB = {
     "大葱": 185, "蘑菇": 167, "蛋": 115, "土豆": 124, "苹果": 90,
     "香草": 130, "肠": 103, "牛奶": 98, "蜂蜜": 101, "油": 121,
     "姜": 109, "番茄": 110, "可可": 151, "尾巴": 342, "大豆": 100,
     "玉米": 140, "咖啡": 153, "南瓜": 250, "酪梨": 162
 };
-// 所有食材的平均能量（精确计算，约157.5）
 const AVG_FOOD_ENERGY = Object.values(FOOD_ENERGY_DB).reduce((a,b)=>a+b,0) / Object.keys(FOOD_ENERGY_DB).length;
 
-// 根据食材名称获取能量，找不到时使用全局平均
 function getFoodEnergy(foodName) {
     return FOOD_ENERGY_DB[foodName] || AVG_FOOD_ENERGY;
 }
 
-// 计算基础食材产能（自身树果和食材）
 function computeFoodProduction(mon, M_h, M_f) {
     let baseInterval = mon.interval * 0.862 * 0.45;
     let dailyHelps = (86400 / baseInterval) * M_h;
@@ -336,7 +332,6 @@ function computeFoodProduction(mon, M_h, M_f) {
     return dailyHelps * foodProb * avgFood;
 }
 
-// 计算技能食材产能（支持各种食材技能）
 function computeSkillProduction(mon, M_h, M_p, level) {
     let baseInterval = mon.interval * 0.862 * 0.45;
     let dailyHelps = (86400 / baseInterval) * M_h;
@@ -345,7 +340,7 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     let skillData = mon.skillLevels[level];
     if (!skillData) return { food: 0, details: [] };
 
-    // 普通食材获取S（从全19种食材中随机）
+    // 普通食材获取S
     if (mon.skillLabel && mon.skillLabel.includes('食材获取S') && !mon.skillPool) {
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         return {
@@ -355,30 +350,25 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         };
     }
 
-    // 食材精选S / 怪力钳 / 超幸运 等（有具体技能池）
+    // 食材精选S / 怪力钳 / 超幸运 等（8抽1或加权随机）
     if (mon.skillPool && mon.skillPool.items) {
         let pool = mon.skillPool;
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let expectedFood = 0;
         let expectedEnergy = 0;
         let details = [];
-        // 普通倍率食材
-        for (let i = 0; i < pool.items.length; i++) {
-            let prob = pool.itemProbs[i];
-            let itemEnergy = getFoodEnergy(pool.items[i]);
-            expectedFood += totalFood * prob;
-            expectedEnergy += totalFood * prob * itemEnergy;
-            details.push(`${pool.items[i]}: ${(totalFood * prob).toFixed(1)}个`);
-        }
-        // 双倍概率（如大嘴娃）
-        if (pool.doubleProbs) {
-            for (let i = 0; i < pool.doubleProbs.length; i++) {
-                let prob = pool.doubleProbs[i];
-                let itemEnergy = getFoodEnergy(pool.items[i]);
-                expectedFood += totalFood * prob * 2;
-                expectedEnergy += totalFood * prob * 2 * itemEnergy;
-                details.push(`${pool.items[i]}(双倍): ${(totalFood * prob * 2).toFixed(1)}个`);
-            }
+        let items = pool.items;
+        let probs = pool.itemProbs;
+        let multipliers = pool.multipliers || probs.map(() => 1); // 默认倍率为1
+
+        for (let i = 0; i < items.length; i++) {
+            let prob = probs[i];
+            let mult = multipliers[i];
+            let itemEnergy = getFoodEnergy(items[i]);
+            expectedFood += totalFood * prob * mult;
+            expectedEnergy += totalFood * prob * mult * itemEnergy;
+            let label = mult > 1 ? `${items[i]} (x${mult})` : items[i];
+            details.push(`${label}: ${(totalFood * prob * mult).toFixed(1)}个`);
         }
         return {
             food: dailySkillCount * expectedFood,
