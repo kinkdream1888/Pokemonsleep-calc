@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.2 连续点选+取消选择） ==========
+// ========== 副技能选择面板（V0.1.8.2 修复版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -11,6 +11,13 @@ function getSkillCategory(skillName) {
     if (!skillName) return '';
     const skill = SUB_SKILLS[skillName];
     return skill ? skill.category : '';
+}
+
+function getSlotLevel(skillName) {
+    let index = selectedSkills.indexOf(skillName);
+    if (index === -1) return null;
+    const levels = [10, 25, 50, 70, 80];
+    return levels[index];
 }
 
 function renderSubSkillGrid() {
@@ -26,7 +33,6 @@ function renderSubSkillGrid() {
             if (cat === 'gold') slot.classList.add('gold');
             else if (cat === 'blue') slot.classList.add('blue');
             else if (cat === 'white') slot.classList.add('white');
-            // 等级角标
             let badge = document.createElement('span');
             badge.className = 'level-badge';
             badge.textContent = levels[i];
@@ -61,17 +67,30 @@ function openSubSkillMenu(slotIndex, level) {
     GOLD_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn gold';
-        btn.textContent = skill;
-        btn.disabled = false; // 不再禁用，允许点击取消
+        let slotLevel = getSlotLevel(skill);
+        if (slotLevel !== null) {
+            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
+            btn.style.background = '#e0e0e0';
+        } else {
+            btn.textContent = skill;
+        }
         btn.onclick = () => {
-            // 如果已选中，取消选择
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
                 return;
             }
-            // 否则找第一个空位填充
+            // 优先填入当前点击的格子
+            if (selectedSkills[slotIndex] === null) {
+                selectedSkills[slotIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
+                return;
+            }
+            // 如果当前格子已被占用，找第一个空位
             let emptyIndex = selectedSkills.findIndex(s => s === null);
             if (emptyIndex !== -1) {
                 selectedSkills[emptyIndex] = skill;
@@ -95,13 +114,26 @@ function openSubSkillMenu(slotIndex, level) {
     BLUE_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn blue';
-        btn.textContent = skill;
-        btn.disabled = false;
+        let slotLevel = getSlotLevel(skill);
+        if (slotLevel !== null) {
+            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
+            btn.style.background = '#d0d0d0';
+        } else {
+            btn.textContent = skill;
+        }
         btn.onclick = () => {
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
+                return;
+            }
+            if (selectedSkills[slotIndex] === null) {
+                selectedSkills[slotIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
                 return;
             }
             let emptyIndex = selectedSkills.findIndex(s => s === null);
@@ -127,13 +159,26 @@ function openSubSkillMenu(slotIndex, level) {
     WHITE_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn white';
-        btn.textContent = skill;
-        btn.disabled = false;
+        let slotLevel = getSlotLevel(skill);
+        if (slotLevel !== null) {
+            btn.textContent = skill + ' (Lv.' + slotLevel + ')';
+            btn.style.background = '#e8e8e8';
+        } else {
+            btn.textContent = skill;
+        }
         btn.onclick = () => {
             let existingIndex = selectedSkills.indexOf(skill);
             if (existingIndex !== -1) {
                 selectedSkills[existingIndex] = null;
                 renderSubSkillGrid();
+                return;
+            }
+            if (selectedSkills[slotIndex] === null) {
+                selectedSkills[slotIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
                 return;
             }
             let emptyIndex = selectedSkills.findIndex(s => s === null);
@@ -158,7 +203,6 @@ function openSubSkillMenu(slotIndex, level) {
     clearAllBtn.onclick = () => {
         selectedSkills.fill(null);
         renderSubSkillGrid();
-        // 不再关闭菜单
     };
     let closeBtn = document.createElement('button');
     closeBtn.className = 'skill-close-btn';
