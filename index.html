@@ -317,7 +317,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.7.4</small>
+        <small>V0.1.7.5</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -413,9 +413,13 @@
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
     // ========== 0.1.x：网页工具时代 ==========
+    { version: 'V0.1.7.5', date: '2026-07-12', notes: [
+    '修复捕捉概率计算逻辑：从“恰好匹配”修正为“至少包含”，更符合实际出货体感。'
+]},
     { version: 'V0.1.7.4', date: '2026-07-12', notes: [
     '数据库重大修正：树果能量、食材能量、食材平均个数全部校准至游戏基础值。',
-    '修正谜拟Q、老翁龙属性错误；修正拉帝欧斯、克雷色利亚食材个数类型错误。'
+    '修正谜拟Q、老翁龙属性错误；修正拉帝欧斯、克雷色利亚食材个数类型错误。',
+    '补充所有已实装宝可梦的技能等级数据（Lv.1~Lv.7），为金瓜子系统做准备。'
 ]},
     { version: 'V0.1.7.3', date: '2026-07-12', notes: [
     '修复捕捉概率无法计算的问题。',
