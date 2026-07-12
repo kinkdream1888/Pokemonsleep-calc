@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.4 顺序多选+替换修复） ==========
+// ========== 副技能选择面板（V0.1.8.4 顺序多选+反馈修复） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -33,10 +33,7 @@ function renderSubSkillGrid() {
             if (cat === 'gold') slot.classList.add('gold');
             else if (cat === 'blue') slot.classList.add('blue');
             else if (cat === 'white') slot.classList.add('white');
-            let badge = document.createElement('span');
-            badge.className = 'level-badge';
-            badge.textContent = levels[i];
-            slot.appendChild(badge);
+            // 已移除角标
         } else {
             slot.textContent = `Lv.${levels[i]}`;
         }
@@ -67,7 +64,7 @@ function openSubSkillMenu(slotIndex, level) {
         skills.forEach(skill => {
             let btn = document.createElement('button');
             btn.className = `skill-btn ${colorClass}`;
-            btn.setAttribute('data-skill', skill);  // 存储技能名，避免文本干扰
+            btn.setAttribute('data-skill', skill);  // 存储纯净技能名
             btn.style.position = 'relative';
             btn.textContent = skill;
             let badge = document.createElement('span');
@@ -136,7 +133,7 @@ function openSubSkillMenu(slotIndex, level) {
 function updateAllMenuBadges(overlay) {
     let buttons = overlay.querySelectorAll('.skill-btn');
     buttons.forEach(btn => {
-        let skill = btn.getAttribute('data-skill');
+        let skill = btn.getAttribute('data-skill');  // 使用属性获取准确技能名
         if (!skill) return;
         let badge = btn.querySelector('.menu-badge');
         if (!badge) return;
