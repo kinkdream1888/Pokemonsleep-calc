@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8 二级菜单版） ==========
+// ========== 副技能选择面板（V0.1.8 样式增强版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -7,17 +7,34 @@ function getSelectedSubs() {
     return selectedSkills.filter(s => s !== null);
 }
 
+function getSkillCategory(skillName) {
+    if (!skillName) return '';
+    const skill = SUB_SKILLS[skillName];
+    return skill ? skill.category : '';
+}
+
 function renderSubSkillGrid() {
     SUB_SKILLS_GRID.innerHTML = '';
     const levels = [10, 25, 50, 70, 80];
     for (let i = 0; i < MAX_SLOTS; i++) {
         let slot = document.createElement('div');
         slot.className = 'skill-slot';
-        slot.textContent = selectedSkills[i] || `Lv.${levels[i]}`;
+        if (selectedSkills[i]) {
+            slot.textContent = selectedSkills[i];
+            slot.classList.add('filled');
+            let cat = getSkillCategory(selectedSkills[i]);
+            if (cat === 'gold') slot.classList.add('gold');
+            else if (cat === 'blue') slot.classList.add('blue');
+            else if (cat === 'white') slot.classList.add('white');
+        } else {
+            slot.textContent = `Lv.${levels[i]}`;
+        }
         slot.onclick = () => openSubSkillMenu(i, levels[i]);
         SUB_SKILLS_GRID.appendChild(slot);
     }
 }
+
+// openSubSkillMenu 保持不变，只需确保按钮的 disabled 状态基于 selectedSkills.includes(skill)
 
 function openSubSkillMenu(slotIndex, level) {
     let overlay = document.createElement('div');
