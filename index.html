@@ -810,7 +810,7 @@ function updateNatureCount() {
     }
 }
 
-// 捕捉概率计算（V0.1.7.3）
+// 捕捉概率计算（V0.1.7.5 修正版 - 至少包含逻辑）
 function calculateProbability() {
     let selectedSubs = getSelectedSubs();
     let natureProb = 0;
@@ -881,9 +881,13 @@ function calculateProbability() {
             pool.splice(pool.indexOf(pickedSkill), 1);
         }
 
+        // 检查前四格是否至少包含所有目标技能（顺序无关）
         let foundAll = true;
         for (let ts of targetSkills) {
-            if (!chosen.includes(ts)) { foundAll = false; break; }
+            if (!chosen.includes(ts)) {
+                foundAll = false;
+                break;
+            }
         }
         if (foundAll) successCount++;
     }
@@ -904,11 +908,12 @@ function calculateProbability() {
 近似概率: ${prob.toFixed(6)}% (约 1/${oneOver})
 ${foodNote}
 ${selectedSubs.some(s => s.endsWith('S')) ? '※ 若出现S级技能，可使用银瓜子升级至M。' : ''}
-※ 基于100万次模拟，前${simSlots}格无放回抽取。`;
+※ 基于100万次模拟，前${simSlots}格无放回抽取。
+※ 概率表示“至少包含”指定副技能组合的出货率。`;
 
     document.getElementById('probResult').innerHTML = resultText.replace(/\n/g, '<br>');
     document.getElementById('probResult').style.display = 'block';
-  }
+}
 
 // ========== 历史记录与保存 ==========
 function removeSaveButton() {
