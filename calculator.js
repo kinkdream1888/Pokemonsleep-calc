@@ -170,7 +170,6 @@ function calculate() {
     let calcType = typeSelect.value;
     let nature = natureSelect.value;
     let selectedSubs = getSelectedSubs();
-    let useRealistic = useRealistic.checked;
 
     if (calcType === '食材型') {
         let pokeValue = pokeSelect.value;
