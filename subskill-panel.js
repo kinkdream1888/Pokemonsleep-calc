@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.3 角标即时反馈版） ==========
+// ========== 副技能选择面板（V0.1.8.3 角标与反馈修复版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -58,162 +58,64 @@ function openSubSkillMenu(slotIndex, level) {
     title.textContent = `请选择等级：${level} 的副技能`;
     menu.appendChild(title);
 
-    const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
-    let goldSection = document.createElement('div');
-    goldSection.className = 'skill-menu-section';
-    goldSection.innerHTML = '<b>金色副技能</b>';
-    let goldGrid = document.createElement('div');
-    goldGrid.className = 'skill-menu-grid';
-    GOLD_SKILLS.forEach(skill => {
-        let btn = document.createElement('button');
-        btn.className = 'skill-btn gold';
-        btn.style.position = 'relative';
-        btn.textContent = skill;
-        let badge = document.createElement('span');
-        badge.className = 'menu-badge';
-        badge.style.display = 'none';
-        let slotLevel = getSlotLevel(skill);
-        if (slotLevel !== null) {
-            badge.textContent = slotLevel;
-            badge.style.display = 'inline-block';
-        }
-        btn.appendChild(badge);
-        btn.onclick = () => {
-            let existingIndex = selectedSkills.indexOf(skill);
-            if (existingIndex !== -1) {
-                selectedSkills[existingIndex] = null;
-                renderSubSkillGrid();
-                // 更新菜单内所有角标
-                updateAllMenuBadges(overlay);
-                return;
+    function buildSection(skills, colorClass) {
+        let section = document.createElement('div');
+        section.className = 'skill-menu-section';
+        section.innerHTML = `<b>${colorClass === 'gold' ? '金色' : colorClass === 'blue' ? '蓝色' : '白色'}副技能</b>`;
+        let grid = document.createElement('div');
+        grid.className = 'skill-menu-grid';
+        skills.forEach(skill => {
+            let btn = document.createElement('button');
+            btn.className = `skill-btn ${colorClass}`;
+            btn.style.position = 'relative';
+            btn.textContent = skill;
+            let badge = document.createElement('span');
+            badge.className = 'menu-badge';
+            badge.style.display = 'none';
+            // 初始设置角标
+            let slotLevel = getSlotLevel(skill);
+            if (slotLevel !== null) {
+                badge.textContent = slotLevel;
+                badge.style.display = 'inline-block';
+                btn.classList.add('selected');
             }
-            if (selectedSkills[slotIndex] === null) {
-                selectedSkills[slotIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
+            btn.appendChild(badge);
+            btn.onclick = () => {
+                let existingIndex = selectedSkills.indexOf(skill);
+                if (existingIndex !== -1) {
+                    selectedSkills[existingIndex] = null;
+                    renderSubSkillGrid();
+                    updateAllMenuBadges(overlay);
+                    return;
                 }
-                return;
-            }
-            let emptyIndex = selectedSkills.findIndex(s => s === null);
-            if (emptyIndex !== -1) {
-                selectedSkills[emptyIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
+                if (selectedSkills[slotIndex] === null) {
+                    selectedSkills[slotIndex] = skill;
+                    renderSubSkillGrid();
+                    updateAllMenuBadges(overlay);
+                    if (selectedSkills.every(s => s !== null)) {
+                        document.body.removeChild(overlay);
+                    }
+                    return;
                 }
-            }
-        };
-        goldGrid.appendChild(btn);
-    });
-    goldSection.appendChild(goldGrid);
-    menu.appendChild(goldSection);
+                let emptyIndex = selectedSkills.findIndex(s => s === null);
+                if (emptyIndex !== -1) {
+                    selectedSkills[emptyIndex] = skill;
+                    renderSubSkillGrid();
+                    updateAllMenuBadges(overlay);
+                    if (selectedSkills.every(s => s !== null)) {
+                        document.body.removeChild(overlay);
+                    }
+                }
+            };
+            grid.appendChild(btn);
+        });
+        section.appendChild(grid);
+        menu.appendChild(section);
+    }
 
-    const BLUE_SKILLS = ["技能等级S", "帮M", "技概M", "食概M", "持有上限L", "持有上限M"];
-    let blueSection = document.createElement('div');
-    blueSection.className = 'skill-menu-section';
-    blueSection.innerHTML = '<b>蓝色副技能</b>';
-    let blueGrid = document.createElement('div');
-    blueGrid.className = 'skill-menu-grid';
-    BLUE_SKILLS.forEach(skill => {
-        let btn = document.createElement('button');
-        btn.className = 'skill-btn blue';
-        btn.style.position = 'relative';
-        btn.textContent = skill;
-        let badge = document.createElement('span');
-        badge.className = 'menu-badge';
-        badge.style.display = 'none';
-        let slotLevel = getSlotLevel(skill);
-        if (slotLevel !== null) {
-            badge.textContent = slotLevel;
-            badge.style.display = 'inline-block';
-        }
-        btn.appendChild(badge);
-        btn.onclick = () => {
-            let existingIndex = selectedSkills.indexOf(skill);
-            if (existingIndex !== -1) {
-                selectedSkills[existingIndex] = null;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                return;
-            }
-            if (selectedSkills[slotIndex] === null) {
-                selectedSkills[slotIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
-                }
-                return;
-            }
-            let emptyIndex = selectedSkills.findIndex(s => s === null);
-            if (emptyIndex !== -1) {
-                selectedSkills[emptyIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
-                }
-            }
-        };
-        blueGrid.appendChild(btn);
-    });
-    blueSection.appendChild(blueGrid);
-    menu.appendChild(blueSection);
-
-    const WHITE_SKILLS = ["帮S", "技概S", "食概S", "持有上限S"];
-    let whiteSection = document.createElement('div');
-    whiteSection.className = 'skill-menu-section';
-    whiteSection.innerHTML = '<b>白色副技能</b>';
-    let whiteGrid = document.createElement('div');
-    whiteGrid.className = 'skill-menu-grid';
-    WHITE_SKILLS.forEach(skill => {
-        let btn = document.createElement('button');
-        btn.className = 'skill-btn white';
-        btn.style.position = 'relative';
-        btn.textContent = skill;
-        let badge = document.createElement('span');
-        badge.className = 'menu-badge';
-        badge.style.display = 'none';
-        let slotLevel = getSlotLevel(skill);
-        if (slotLevel !== null) {
-            badge.textContent = slotLevel;
-            badge.style.display = 'inline-block';
-        }
-        btn.appendChild(badge);
-        btn.onclick = () => {
-            let existingIndex = selectedSkills.indexOf(skill);
-            if (existingIndex !== -1) {
-                selectedSkills[existingIndex] = null;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                return;
-            }
-            if (selectedSkills[slotIndex] === null) {
-                selectedSkills[slotIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
-                }
-                return;
-            }
-            let emptyIndex = selectedSkills.findIndex(s => s === null);
-            if (emptyIndex !== -1) {
-                selectedSkills[emptyIndex] = skill;
-                renderSubSkillGrid();
-                updateAllMenuBadges(overlay);
-                if (selectedSkills.every(s => s !== null)) {
-                    document.body.removeChild(overlay);
-                }
-            }
-        };
-        whiteGrid.appendChild(btn);
-    });
-    whiteSection.appendChild(whiteGrid);
-    menu.appendChild(whiteSection);
+    buildSection(["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"], 'gold');
+    buildSection(["技能等级S", "帮M", "技概M", "食概M", "持有上限L", "持有上限M"], 'blue');
+    buildSection(["帮S", "技概S", "食概S", "持有上限S"], 'white');
 
     let footer = document.createElement('div');
     footer.className = 'skill-menu-footer';
@@ -247,8 +149,10 @@ function updateAllMenuBadges(overlay) {
         if (slotLevel !== null) {
             badge.textContent = slotLevel;
             badge.style.display = 'inline-block';
+            btn.classList.add('selected');
         } else {
             badge.style.display = 'none';
+            btn.classList.remove('selected');
         }
     });
 }
