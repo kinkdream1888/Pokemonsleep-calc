@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8 样式增强版） ==========
+// ========== 副技能选择面板（V0.1.8.2 连续点选版） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -26,6 +26,11 @@ function renderSubSkillGrid() {
             if (cat === 'gold') slot.classList.add('gold');
             else if (cat === 'blue') slot.classList.add('blue');
             else if (cat === 'white') slot.classList.add('white');
+            // 等级角标
+            let badge = document.createElement('span');
+            badge.className = 'level-badge';
+            badge.textContent = levels[i];
+            slot.appendChild(badge);
         } else {
             slot.textContent = `Lv.${levels[i]}`;
         }
@@ -44,7 +49,7 @@ function openSubSkillMenu(slotIndex, level) {
 
     let title = document.createElement('div');
     title.className = 'skill-menu-title';
-    title.textContent = `请选择等级${level}的副技能`;
+    title.textContent = '选择副技能（可连续点选，自动填充空位）';
     menu.appendChild(title);
 
     const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
@@ -58,7 +63,16 @@ function openSubSkillMenu(slotIndex, level) {
         btn.className = 'skill-btn gold';
         btn.textContent = skill;
         btn.disabled = selectedSkills.includes(skill);
-        btn.onclick = () => { selectedSkills[slotIndex] = skill; renderSubSkillGrid(); document.body.removeChild(overlay); };
+        btn.onclick = () => {
+            let emptyIndex = selectedSkills.findIndex(s => s === null);
+            if (emptyIndex !== -1) {
+                selectedSkills[emptyIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
+            }
+        };
         goldGrid.appendChild(btn);
     });
     goldSection.appendChild(goldGrid);
@@ -75,7 +89,16 @@ function openSubSkillMenu(slotIndex, level) {
         btn.className = 'skill-btn blue';
         btn.textContent = skill;
         btn.disabled = selectedSkills.includes(skill);
-        btn.onclick = () => { selectedSkills[slotIndex] = skill; renderSubSkillGrid(); document.body.removeChild(overlay); };
+        btn.onclick = () => {
+            let emptyIndex = selectedSkills.findIndex(s => s === null);
+            if (emptyIndex !== -1) {
+                selectedSkills[emptyIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
+            }
+        };
         blueGrid.appendChild(btn);
     });
     blueSection.appendChild(blueGrid);
@@ -92,17 +115,38 @@ function openSubSkillMenu(slotIndex, level) {
         btn.className = 'skill-btn white';
         btn.textContent = skill;
         btn.disabled = selectedSkills.includes(skill);
-        btn.onclick = () => { selectedSkills[slotIndex] = skill; renderSubSkillGrid(); document.body.removeChild(overlay); };
+        btn.onclick = () => {
+            let emptyIndex = selectedSkills.findIndex(s => s === null);
+            if (emptyIndex !== -1) {
+                selectedSkills[emptyIndex] = skill;
+                renderSubSkillGrid();
+                if (selectedSkills.every(s => s !== null)) {
+                    document.body.removeChild(overlay);
+                }
+            }
+        };
         whiteGrid.appendChild(btn);
     });
     whiteSection.appendChild(whiteGrid);
     menu.appendChild(whiteSection);
 
-    let clearBtn = document.createElement('button');
-    clearBtn.className = 'skill-clear-btn';
-    clearBtn.textContent = '清空此格';
-    clearBtn.onclick = () => { selectedSkills[slotIndex] = null; renderSubSkillGrid(); document.body.removeChild(overlay); };
-    menu.appendChild(clearBtn);
+    let footer = document.createElement('div');
+    footer.className = 'skill-menu-footer';
+    let clearAllBtn = document.createElement('button');
+    clearAllBtn.className = 'skill-clear-btn';
+    clearAllBtn.textContent = '清空全部';
+    clearAllBtn.onclick = () => {
+        selectedSkills.fill(null);
+        renderSubSkillGrid();
+        document.body.removeChild(overlay);
+    };
+    let closeBtn = document.createElement('button');
+    closeBtn.className = 'skill-close-btn';
+    closeBtn.textContent = '关闭';
+    closeBtn.onclick = () => document.body.removeChild(overlay);
+    footer.appendChild(clearAllBtn);
+    footer.appendChild(closeBtn);
+    menu.appendChild(footer);
 
     overlay.appendChild(menu);
     document.body.appendChild(overlay);
