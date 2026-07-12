@@ -491,6 +491,7 @@ const UPDATE_LOG = [
     { version: 'V0.1.8.5', date: '2026-07-12', notes: [
         '字体略微调整，副技能/性格菜单宽度更紧凑。',
         '公告栏修复为按实际行数分页。'
+        '恢复能量填充M、树果遽增宝可梦的技能标签。'
     ]},
     { version: 'V0.1.8.4', date: '2026-07-12', notes: [
         '修复副技能菜单角标反馈消失、无法顺序多选的严重bug。',
@@ -733,6 +734,16 @@ function updateSkillTag() {
         skillTag.style.display = 'inline-block';
     } else if (calcType === '技能型' && pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue] && SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel) {
         skillTag.textContent = SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    }
+    // 能量填充M 技能标签
+    if (calcType === '能量填充M' && pokeValue && ENERGY_MONS_DATA[pokeValue] && ENERGY_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = ENERGY_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    }
+    // 树果遽增 技能标签
+    if (calcType === '树果遽增' && pokeValue && BERRY_BOOST_MONS_DATA[pokeValue] && BERRY_BOOST_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = BERRY_BOOST_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
     }
 }
