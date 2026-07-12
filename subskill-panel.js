@@ -34,8 +34,6 @@ function renderSubSkillGrid() {
     }
 }
 
-// openSubSkillMenu 保持不变，只需确保按钮的 disabled 状态基于 selectedSkills.includes(skill)
-
 function openSubSkillMenu(slotIndex, level) {
     let overlay = document.createElement('div');
     overlay.className = 'skill-menu-overlay';
@@ -49,12 +47,12 @@ function openSubSkillMenu(slotIndex, level) {
     title.textContent = `请选择等级${level}的副技能`;
     menu.appendChild(title);
 
+    const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
     let goldSection = document.createElement('div');
     goldSection.className = 'skill-menu-section';
     goldSection.innerHTML = '<b>金色副技能</b>';
     let goldGrid = document.createElement('div');
     goldGrid.className = 'skill-menu-grid';
-    const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
     GOLD_SKILLS.forEach(skill => {
         let btn = document.createElement('button');
         btn.className = 'skill-btn gold';
