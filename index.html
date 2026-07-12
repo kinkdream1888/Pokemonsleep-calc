@@ -318,19 +318,20 @@
             display: flex; justify-content: center; align-items: center;
         }
         .skill-menu {
-            background: white; border-radius: 10px; padding: 10px;
-            max-width: 360px; width: 95%; max-height: 80vh; overflow-y: auto;
+            background: white; border-radius: 10px; padding: 8px;
+            max-width: 330px; width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .skill-menu-title { font-size: 1em; font-weight: bold; margin-bottom: 8px; }
-        .skill-menu-section { margin-bottom: 6px; }
+        .skill-menu-title { font-size: 0.95em; font-weight: bold; margin-bottom: 6px; }
+        .skill-menu-section { margin-bottom: 5px; }
         .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .skill-btn {
-            padding: 3px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;
+            padding: 2px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75em;
             position: relative;
         }
         .skill-btn.gold { background: #ffe082; }
         .skill-btn.blue { background: #bbdefb; }
         .skill-btn.white { background: #f5f5f5; }
+        .skill-btn.selected { filter: brightness(0.85); }
         .skill-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .menu-badge {
             position: absolute; top: -6px; right: -6px;
@@ -338,9 +339,10 @@
             font-size: 0.6em; padding: 1px 3px; border-radius: 6px;
             line-height: 1;
             display: none;
+            z-index: 10;
         }
         .skill-menu-footer {
-            display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;
+            display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;
         }
         .skill-clear-btn, .skill-close-btn {
             background: #e0e0e0; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em;
@@ -361,15 +363,15 @@
             display: flex; justify-content: center; align-items: center;
         }
         .nature-menu {
-            background: white; border-radius: 10px; padding: 12px;
-            max-width: 400px; width: 95%; max-height: 80vh; overflow-y: auto;
+            background: white; border-radius: 10px; padding: 10px;
+            max-width: 380px; width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .nature-group { margin-bottom: 4px; }
-        .nature-group-title { font-weight: bold; margin-bottom: 2px; border-bottom: 1px solid #ddd; font-size: 0.8em; }
-        .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
-        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 4px; cursor: pointer; font-size: 0.75em; }
+        .nature-group { margin-bottom: 3px; }
+        .nature-group-title { font-weight: bold; margin-bottom: 2px; border-bottom: 1px solid #ddd; font-size: 0.75em; }
+        .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 3px; cursor: pointer; font-size: 0.7em; }
         .nature-btn:hover { background: #e0e0e0; }
-        .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+        .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 6px; }
         .page-btns {
             margin-top: 8px;
             display: flex;
