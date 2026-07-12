@@ -285,12 +285,15 @@
         /* 副技能面板样式 */
         .sub-skills-grid {
             display: flex;
+            flex-wrap: wrap;
             gap: 6px;
             margin: 6px 0;
         }
         .skill-slot {
             position: relative;
-            width: 80px;
+            width: calc(50% - 3px);
+            max-width: 200px;
+            min-width: 120px;
             height: 36px;
             border: 1px dashed #aaa;
             border-radius: 4px;
@@ -300,6 +303,11 @@
             font-size: 0.8em;
             cursor: pointer;
             background: #fafafa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+            box-sizing: border-box;
         }
         .skill-slot:hover { background: #e8f0fe; }
         .skill-slot.filled { border-style: solid; }
@@ -548,7 +556,7 @@ const UPDATE_LOG = [
     { version: 'V0.1.4.3', date: '2026-07-11', notes: ['修复技能型、能量填充M、树果遽增、拉帝欧斯实战估算无效。'] },
     { version: 'V0.1.4.2', date: '2026-07-11', notes: ['修复实战估算选项显示逻辑（树果型/食材型默认不显示）。'] },
     { version: 'V0.1.4.1', date: '2026-07-11', notes: ['双修食材型结果新增综合强度含义说明。', '对照组专家面板增加配置描述。', '修复普通食材型帮手奖励团队倍率缺失。'] },
-    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增“双修”食材型：古月鸟、老翁龙。动态计算食材个数与技能次数，对比样本源自于毒骷蛙/隆隆岩/咚咚鼠。'] },
+    { version: 'V0.1.4', date: '2026-07-11', notes: ['新增"双修"食材型：古月鸟、老翁龙。动态计算食材个数与技能次数，对比样本源自于毒骷蛙/隆隆岩/咚咚鼠。'] },
     { version: 'V0.1.3', date: '2026-07-10', notes: ['新增更新公告栏。'] },
     { version: 'V0.1.2', date: '2026-07-10', notes: ['修复树果遽增技能能量计算错误（蜥蜴王、勇士雄鹰、谜拟Q）。'] },
     { version: 'V0.1.1', date: '2026-07-10', notes: ['修复实战估算未生效。', '初始网页版发布。'] },
@@ -574,7 +582,6 @@ function buildPages() {
     let result = [];
     let currentPage = [];
     let currentLines = 0;
-    // 用隐藏元素测量行数
     let tempDiv = document.createElement('div');
     tempDiv.style.cssText = 'position:absolute;visibility:hidden;width:' + announceList.clientWidth + 'px;font-size:0.85em;line-height:1.5;';
     document.body.appendChild(tempDiv);
@@ -584,7 +591,7 @@ function buildPages() {
         let li = document.createElement('li');
         li.innerHTML = `<strong>${log.version}</strong> (${log.date})<br>${log.notes.join('<br>')}`;
         tempDiv.appendChild(li);
-        let entryLines = Math.ceil(tempDiv.offsetHeight / 18); // 约18px行高
+        let entryLines = Math.ceil(tempDiv.offsetHeight / 18);
 
         if (currentLines + entryLines > MAX_LINES_PER_PAGE && currentPage.length > 0) {
             result.push(currentPage);
@@ -627,7 +634,7 @@ function toggleAnnounce() {
         panel.style.display = 'none';
     } else {
         panel.style.display = 'block';
-        pages = buildPages(); // 打开时重新计算分页
+        pages = buildPages();
         currentAnnouncePage = 0;
         renderAnnouncePage(0);
     }
@@ -651,7 +658,6 @@ let savedHistory = [];
 let useRealistic = false;
 window.useRealistic = false;
 
-// 初始化性格隐藏下拉框和显示
 for (let nature of Object.keys(NATURES)) {
     let opt = document.createElement('option');
     opt.value = nature;
@@ -712,7 +718,6 @@ function openNatureMenu() {
     document.body.appendChild(overlay);
 }
 
-// 初始化副技能面板
 renderSubSkillGrid();
 
 function updateRealisticVisibility() {
