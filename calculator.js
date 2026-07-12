@@ -311,3 +311,56 @@ function calculate() {
 
     resultBox.innerHTML = lines.join('<br>');
 }
+// ========== 产能计算 ==========
+function computeFoodProduction(mon, M_h, M_f) {
+    let baseInterval = mon.interval * 0.862 * 0.45;
+    let dailyHelps = (86400 / baseInterval) * M_h;
+    let foodProb = Math.min(mon.prob_f * M_f, 1.0);
+    let avgFood = mon.avg_food || 4.667;
+    return dailyHelps * foodProb * avgFood;
+}
+
+function computeSkillProduction(mon, M_h, M_p, level) {
+    let baseInterval = mon.interval * 0.862 * 0.45;
+    let dailyHelps = (86400 / baseInterval) * M_h;
+    let skillProb = mon.prob_s * M_p;
+    let dailySkillCount = dailyHelps * skillProb;
+
+    let skillData = mon.skillLevels[level];
+    if (!skillData) return { food: 0, details: [] };
+
+    // 食材获取S 通用处理
+    if (mon.skillLabel && mon.skillLabel.includes('食材获取S') && !mon.skillPool) {
+        let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
+        return {
+            food: dailySkillCount * totalFood,
+            details: [`随机三种食材各${Math.floor(totalFood/3)}个`]
+        };
+    }
+
+    // 食材精选S 处理
+    if (mon.skillPool && mon.skillPool.items) {
+        let pool = mon.skillPool;
+        let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
+        let expectedFood = 0;
+        let details = [];
+        for (let i = 0; i < pool.items.length; i++) {
+            let prob = pool.itemProbs[i];
+            expectedFood += totalFood * prob;
+            details.push(`${pool.items[i]}: ${(totalFood * prob).toFixed(1)}个`);
+        }
+        if (pool.doubleProbs) {
+            for (let i = 0; i < pool.doubleProbs.length; i++) {
+                let prob = pool.doubleProbs[i];
+                expectedFood += totalFood * prob * 2;
+                details.push(`${pool.items[i]}(双倍): ${(totalFood * prob * 2).toFixed(1)}个`);
+            }
+        }
+        return {
+            food: dailySkillCount * expectedFood,
+            details: details
+        };
+    }
+
+    return { food: 0, details: [] };
+}
