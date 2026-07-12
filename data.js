@@ -51,7 +51,13 @@ const HYBRID_FOOD_MONS_DATA = {
                  food_rival: "毒骷蛙", sleep_coef: 0.85,
                  skillLabel: "怪力钳·食材精选S", e_f: 564.7, e_b: 181, element: "钢",
                  skillLevels: [5, 6, 8, 11, 13, 16, 18],
-                 skillPool: { items: ["油", "玉米", "番茄", "土豆"], itemProbs: [0.2083, 0.2083, 0.2083, 0.2083], doubleProbs: [0.0417, 0.0417, 0.0417, 0.0417] },
+                 skillPool: {
+                     // 8抽1奖池
+                     items: ["土豆", "油", "番茄", "玉米"],
+                     itemProbs: [0.2083, 0.2083, 0.2083, 0.2083,  // 18个版
+                                0.0417, 0.0417, 0.0417, 0.0417], // 36个版
+                     multipliers: [1, 1, 1, 1, 2, 2, 2, 2]  // 对应数量的倍率
+                 },
     },
     "蝶结萌虻": { dex: 743, interval: 2300, prob_f: 0.194, avg_food: 4.667, prob_s: 0.025,
                  food_rival: "妙蛙花", sleep_coef: 0.85,
