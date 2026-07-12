@@ -318,24 +318,32 @@
             display: flex; justify-content: center; align-items: center;
         }
         .skill-menu {
-            background: white; border-radius: 10px; padding: 15px;
-            max-width: 380px; width: 95%; max-height: 80vh; overflow-y: auto;
+            background: white; border-radius: 10px; padding: 10px;
+            max-width: 360px; width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .skill-menu-title { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; }
-        .skill-menu-section { margin-bottom: 10px; }
+        .skill-menu-title { font-size: 1em; font-weight: bold; margin-bottom: 8px; }
+        .skill-menu-section { margin-bottom: 6px; }
         .skill-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .skill-btn {
-            padding: 4px 6px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;
+            padding: 3px 4px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;
+            position: relative;
         }
         .skill-btn.gold { background: #ffe082; }
         .skill-btn.blue { background: #bbdefb; }
         .skill-btn.white { background: #f5f5f5; }
         .skill-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .menu-badge {
+            position: absolute; top: -6px; right: -6px;
+            background: #3498db; color: white;
+            font-size: 0.6em; padding: 1px 3px; border-radius: 6px;
+            line-height: 1;
+            display: none;
+        }
         .skill-menu-footer {
-            display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;
+            display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;
         }
         .skill-clear-btn, .skill-close-btn {
-            background: #e0e0e0; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;
+            background: #e0e0e0; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em;
         }
         /* 性格菜单样式 */
         .nature-display {
@@ -353,15 +361,15 @@
             display: flex; justify-content: center; align-items: center;
         }
         .nature-menu {
-            background: white; border-radius: 10px; padding: 15px;
+            background: white; border-radius: 10px; padding: 12px;
             max-width: 400px; width: 95%; max-height: 80vh; overflow-y: auto;
         }
-        .nature-group { margin-bottom: 6px; }
-        .nature-group-title { font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid #ddd; font-size: 0.85em; }
-        .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 4px; cursor: pointer; font-size: 0.8em; }
+        .nature-group { margin-bottom: 4px; }
+        .nature-group-title { font-weight: bold; margin-bottom: 2px; border-bottom: 1px solid #ddd; font-size: 0.8em; }
+        .nature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        .nature-btn { background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 2px 4px; cursor: pointer; font-size: 0.75em; }
         .nature-btn:hover { background: #e0e0e0; }
-        .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+        .nature-menu-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
         .page-btns {
             margin-top: 8px;
             display: flex;
@@ -385,7 +393,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.8.2</small>
+        <small>V0.1.8.3</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -464,6 +472,11 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.8.3', date: '2026-07-12', notes: [
+        '副技能菜单标题动态显示等级，角标即时反馈。',
+        '性格菜单精简空白，更紧凑。',
+        '食材型/技能型默认使用50级前三格计算捕捉概率。'
+    ]},
     { version: 'V0.1.8.2', date: '2026-07-12', notes: [
         '副技能菜单支持连续点选自动填充，等级角标显示。',
         '性格菜单用词专业化，增加效果标签（绿箭头/红箭头）。',
@@ -697,6 +710,13 @@ function updateNatureDisplay() {
 
 function onTypeChange() {
     currentType = typeSelect.value;
+
+    // 食材型和技能型默认50级前三格
+    if (currentType === '食材型' || currentType === '技能型') {
+        document.getElementById('simLevel').value = '3';
+    } else {
+        document.getElementById('simLevel').value = '4';
+    }
 
     if (currentType === '能量填充M') {
         pokeRow.style.display = 'flex';
