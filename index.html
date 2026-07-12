@@ -317,7 +317,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.7.2</small>
+        <small>V0.1.7.3</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -413,7 +413,12 @@
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
     // ========== 0.1.x：网页工具时代 ==========
-{ version: 'V0.1.7.2', date: '2026-07-12', notes: [
+    { version: 'V0.1.7.3', date: '2026-07-12', notes: [
+    '修复捕捉概率无法计算的问题。',
+    '模拟次数恢复为100万次。',
+    '技能型默认选项更名为“功能型”，食材型默认选项更名为“纯食材型”。'
+]},
+    { version: 'V0.1.7.2', date: '2026-07-12', notes: [
     '达克莱伊数据实装，开放计算。',
     '幻兽选项改名为“全能型（幻兽）”，捕捉概率对幻兽禁用。',
     '性格多选增加默认说明。',
@@ -797,7 +802,7 @@ function updateNatureCount() {
     }
 }
 
-// 捕捉概率计算（V0.1.7新版，含性格多选和模拟等级）
+// 捕捉概率计算（V0.1.7.3）
 function calculateProbability() {
     let selectedSubs = getSelectedSubs();
     let natureProb = 0;
@@ -808,13 +813,15 @@ function calculateProbability() {
     }
     let lockGold = parseInt(document.getElementById('lockGold').value);
     let simSlots = parseInt(document.getElementById('simLevel').value);
-        if (calcType === '幻兽') {
-        document.getElementById('probResult').innerHTML = '※ 幻兽副技能需使用灵感种子刷新，因此暂时无法计算。';
+    let calcType = typeSelect.value;
+    let pokeValue = pokeSelect ? pokeSelect.value : null;
+
+    // 幻兽拦截
+    if (calcType === '幻兽') {
+        document.getElementById('probResult').innerHTML = '※ 幻兽副技能需使用灵感种子刷新，因此暂时无法计算';
         document.getElementById('probResult').style.display = 'block';
         return;
     }
-    let calcType = typeSelect.value;
-    let pokeValue = pokeSelect ? pokeSelect.value : null;
 
     const GOLD_SKILLS = ["树果S", "帮手奖励", "睡眠EXP奖励", "研究EXP奖励", "活力回复奖励", "梦之碎片奖励", "技能等级M"];
     const BLUE_SKILLS = ["技能等级S", "技概M", "帮M", "食概M", "持有上限L", "持有上限M"];
@@ -838,7 +845,7 @@ function calculateProbability() {
 
     const TOTAL_SKILLS = [...GOLD_SKILLS, ...BLUE_SKILLS, ...WHITE_SKILLS];
     let successCount = 0;
-    const SIM_COUNT = 500000;
+    const SIM_COUNT = 1000000;
 
     for (let i = 0; i < SIM_COUNT; i++) {
         let pool = [...TOTAL_SKILLS];
@@ -889,11 +896,11 @@ function calculateProbability() {
 近似概率: ${prob.toFixed(6)}% (约 1/${oneOver})
 ${foodNote}
 ${selectedSubs.some(s => s.endsWith('S')) ? '※ 若出现S级技能，可使用银瓜子升级至M。' : ''}
-※ 基于50万次模拟，前${simSlots}格无放回抽取。`;
+※ 基于100万次模拟，前${simSlots}格无放回抽取。`;
 
     document.getElementById('probResult').innerHTML = resultText.replace(/\n/g, '<br>');
     document.getElementById('probResult').style.display = 'block';
-}
+  }
 
 // ========== 历史记录与保存 ==========
 function removeSaveButton() {
