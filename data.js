@@ -1,77 +1,56 @@
 // ========== 数据定义 ==========
 const ENERGY_MONS_DATA = {
-    "电龙":    { prob_f: 0.130, e_f: 152.3, prob_s: 0.047, e_b: 143, e_s: 6858 },
-    "树才怪":  { prob_f: 0.217, e_f: 128.9, prob_s: 0.072, e_b: 143, e_s: 6858 },
-    "太阳伊布": { prob_f: 0.164, e_f: 114.8, prob_s: 0.044, e_b: 143, e_s: 6858 },
-    "音波龙":  { prob_f: 0.195, e_f: 105.4, prob_s: 0.048, e_b: 143, e_s: 6858 },
+    "电龙":    { prob_f: 0.130, e_f: 536.7, prob_s: 0.047, e_b: 137, e_s: 6858 },
+    "树才怪":  { prob_f: 0.217, e_f: 466.7, prob_s: 0.072, e_b: 165, e_s: 6858 },
+    "太阳伊布": { prob_f: 0.164, e_f: 228.7, prob_s: 0.044, e_b: 143, e_s: 6858 },
+    "音波龙":  { prob_f: 0.195, e_f: 420.0, prob_s: 0.048, e_b: 192, e_s: 6858 },
 };
 const BERRY_BOOST_MONS_DATA = {
-    "蜥蜴王":  { prob_f: 0.107, e_f: 140.5, prob_s: 0.030, e_b: 143, e_s: 50 },
-    "勇士雄鹰": { prob_f: 0.121, e_f: 120.7, prob_s: 0.035, e_b: 143, e_s: 50 },
-    "谜拟Q":   { prob_f: 0.153, e_f: 105.4, prob_s: 0.035, e_b: 143, e_s: 50 },
+    "蜥蜴王":  { prob_f: 0.107, e_f: 471.3, prob_s: 0.030, e_b: 165, e_s: 50 },
+    "勇士雄鹰": { prob_f: 0.121, e_f: 466.7, prob_s: 0.035, e_b: 132, e_s: 50 },
+    "谜拟Q":   { prob_f: 0.153, e_f: 357.0, prob_s: 0.035, e_b: 143, e_s: 50 },  // 幽灵属性，鬼果143
 };
 const LEGENDARY_MONS_DATA = {
     "拉帝欧斯": { 
-        prob_f: 0.198, e_f: 128.9, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
-        skillLabel: "流星群（树果遽增）",
-        pity: 63
+        prob_f: 0.198, e_f: 256.6, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
+        skillLabel: "流星群（树果遽增）", pity: 63
     },
     "克雷色利亚": { 
-        prob_f: 0.239, e_f: 127.7, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
-        skillLabel: "新月祈祷（活力全体疗愈S）",
-        pity: 62
+        prob_f: 0.239, e_f: 254.3, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
+        skillLabel: "新月祈祷（活力全体疗愈S）", pity: 62
     },
-    "雷公": {
-        unfinished: true,
-        skillLabel: "帮手加速",
-    },
-    "炎帝": {
-        unfinished: true,
-        skillLabel: "帮手加速",
-    },
-    "水君": {
-        unfinished: true,
-        skillLabel: "帮手加速",
-    },
+    "雷公": { unfinished: true, skillLabel: "帮手加速" },
+    "炎帝": { unfinished: true, skillLabel: "帮手加速" },
+    "水君": { unfinished: true, skillLabel: "帮手加速" },
 };
 const PHANTOM_MONS_DATA = {
     "达克莱伊": { 
-        prob_f: 0.192, e_f: 537.9, prob_s: 0.03345, e_b: 170, e_s: 18515, e_s_is_berry: false,
-        skillLabel: "梦魇（能量填充M）",
-        pity: 49,
-        sleep_coef: 0.951,      // 睡眠损耗系数
-        realistic_coef: 0.86,   // 专属兑现系数
-        berry_count: 2,         // 基础产2果
-        food_dist: [2,3,4]      // 食材分布
+        prob_f: 0.192, e_f: 459.0, prob_s: 0.03345, e_b: 170, e_s: 18515, e_s_is_berry: false,
+        skillLabel: "梦魇（能量填充M）", pity: 49, sleep_coef: 0.951, realistic_coef: 0.86,
+        berry_count: 2, food_dist: [2,3,4]
     },
 };
 const HYBRID_FOOD_MONS_DATA = {
     "古月鸟": { 
         interval: 2700, prob_f: 0.165, avg_food: 4.667, prob_s: 0.039,
         food_rival: "毒骷蛙", skill_rival: "咚咚鼠", sleep_coef: 0.8276,
-        skillLabel: "料理成功S"
+        skillLabel: "料理成功S", e_f: 564.7, e_b: 132
     },
     "老翁龙": { 
         interval: 3500, prob_f: 0.294, avg_food: 4.667, prob_s: 0.046,
         food_rival: "隆隆岩", skill_rival: "咚咚鼠", sleep_coef: 0.8402,
-        skillLabel: "料理成功S"
+        skillLabel: "料理成功S", e_f: 466.7, e_b: 192  // 龙属性，龙果192
     },
-    "大嘴娃": { 
-        unfinished: true, dropType: 1,
-        skillLabel: "怪力钳（食材精选S）"
-    },
-    "蝶结萌虻": { 
-        unfinished: true, dropType: 3,
-        skillLabel: "食材精选S"
-    },
+    "大嘴娃": { unfinished: true, dropType: 1, skillLabel: "怪力钳（食材精选S）" },
+    "蝶结萌虻": { unfinished: true, dropType: 3, skillLabel: "食材精选S" },
 };
-
 const SPECIAL_SKILL_MONS_DATA = {
     "穿山王": { unfinished: true, dropType: 1, skillLabel: "食材精选S" },
     "岩殿居蟹": { unfinished: true, dropType: 2, skillLabel: "食材精选S" },
     "乌鸦头头": { unfinished: true, skillLabel: "超幸运（食材精选S）" },
 };
 
+// 其余数据（专家面板、系数、副技能、性格）保持不变
 const EXPERT_GRAD_DATA = {
     "毒骷蛙": { food: 123.04, desc: "帮M+食概M+性格帮" },
     "隆隆岩": { food: 164.99, desc: "帮M+食概M+性格帮" },
