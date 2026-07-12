@@ -1,4 +1,4 @@
-// ========== 副技能选择面板（V0.1.8.4 替换修复版） ==========
+// ========== 副技能选择面板（V0.1.8.4 顺序多选+替换修复） ==========
 const SUB_SKILLS_GRID = document.getElementById('subSkillGrid');
 const MAX_SLOTS = 5;
 let selectedSkills = new Array(MAX_SLOTS).fill(null);
@@ -67,6 +67,7 @@ function openSubSkillMenu(slotIndex, level) {
         skills.forEach(skill => {
             let btn = document.createElement('button');
             btn.className = `skill-btn ${colorClass}`;
+            btn.setAttribute('data-skill', skill);  // 存储技能名，避免文本干扰
             btn.style.position = 'relative';
             btn.textContent = skill;
             let badge = document.createElement('span');
@@ -82,11 +83,16 @@ function openSubSkillMenu(slotIndex, level) {
             btn.onclick = () => {
                 let existingIndex = selectedSkills.indexOf(skill);
                 if (existingIndex !== -1) {
-                    // 技能已被选中，取消选择
+                    // 取消选择
                     selectedSkills[existingIndex] = null;
                 } else {
-                    // 技能未被选中，放入当前格子（替换掉原有技能）
-                    selectedSkills[slotIndex] = skill;
+                    // 优先填入第一个空位，若没有空位则替换当前格子
+                    let emptyIndex = selectedSkills.findIndex(s => s === null);
+                    if (emptyIndex !== -1) {
+                        selectedSkills[emptyIndex] = skill;
+                    } else {
+                        selectedSkills[slotIndex] = skill;
+                    }
                 }
                 renderSubSkillGrid();
                 updateAllMenuBadges(overlay);
@@ -130,10 +136,11 @@ function openSubSkillMenu(slotIndex, level) {
 function updateAllMenuBadges(overlay) {
     let buttons = overlay.querySelectorAll('.skill-btn');
     buttons.forEach(btn => {
-        let skillName = btn.textContent.replace(/^\d+$/, '').trim();
+        let skill = btn.getAttribute('data-skill');
+        if (!skill) return;
         let badge = btn.querySelector('.menu-badge');
         if (!badge) return;
-        let slotLevel = getSlotLevel(skillName);
+        let slotLevel = getSlotLevel(skill);
         if (slotLevel !== null) {
             badge.textContent = slotLevel;
             badge.style.display = 'inline-block';
