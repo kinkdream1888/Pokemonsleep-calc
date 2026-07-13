@@ -79,17 +79,17 @@ const HYBRID_FOOD_MONS_DATA = {
     },
 };
 const SPECIAL_SKILL_MONS_DATA = {
-    "穿山王": { dex: 28,  interval: 2800, prob_f: 0.108, prob_s: 0.043, e_b: 165, e_f: 583.3, element: "地面",
+    "穿山王": { dex: 28,  interval: 2800, prob_f: 0.108, prob_s: 0.043, e_b: 165, e_f: 583.3, element: "地面",avg_food: 2.333,
                  skillLabel: "食材精选S", pity: 51, food_rival: "南瓜怪人·小颗种",
                  skillLevels: [5, 6, 8, 11, 13, 16, 18],
                  skillPool: { items: ["南瓜", "玉米", "土豆"], itemProbs: [0.3333, 0.3333, 0.3333] },
     },
-    "岩殿居蟹": { dex: 558, interval: 3200, prob_f: 0.239, prob_s: 0.064, e_b: 132, e_f: 378.0, element: "虫",
+    "岩殿居蟹": { dex: 558, interval: 3200, prob_f: 0.239, prob_s: 0.064, e_b: 132, e_f: 378.0, element: "虫",avg_food: 2.333,
                  skillLabel: "食材精选S", pity: 45, food_rival: "沙漠蜻蜓",
                  skillLevels: [5, 6, 8, 11, 13, 16, 18],
                  skillPool: { items: ["酪梨", "土豆", "油"], itemProbs: [0.3333, 0.3333, 0.3333] },
     },
-    "乌鸦头头": { dex: 430, interval: 3200, prob_f: 0.143, prob_s: 0.067, e_b: 170, e_f: 357.0, element: "恶",
+    "乌鸦头头": { dex: 430, interval: 3200, prob_f: 0.143, prob_s: 0.067, e_b: 170, e_f: 357.0, element: "恶",avg_food: 2.333,
                  skillLabel: "超幸运·食材精选S", pity: 45, food_rival: "锹农炮虫",
                  skillLevels: [
                      { food: 5, shard4000: 500, shard20000: 2500 },
@@ -102,11 +102,11 @@ const SPECIAL_SKILL_MONS_DATA = {
                  ],
                  skillPool: { items: ["蘑菇", "肠", "大豆", "咖啡"], itemProbs: [0.215, 0.215, 0.215, 0.215], dreamShardProbs: [0.112, 0.028] },
     },
-    "水伊布": { dex: 134, interval: 3100, prob_f: 0.212, prob_s: 0.061, e_b: 170, e_f: 228.7, element: "水",
+    "水伊布": { dex: 134, interval: 3100, prob_f: 0.212, prob_s: 0.061, e_b: 170, e_f: 228.7, element: "水",avg_food: 2.333,
                  skillLabel: "食材获取S", pity: 46,
                  skillLevels: [6, 8, 11, 14, 17, 21, 24],
     },
-    "赫拉克罗斯": { dex: 214, interval: 2300, prob_f: 0.158, prob_s: 0.047, e_b: 165, e_f: 471.3, element: "虫",
+    "赫拉克罗斯": { dex: 214, interval: 2300, prob_f: 0.158, prob_s: 0.047, e_b: 165, e_f: 471.3, element: "虫",avg_food: 2.333,
                  skillLabel: "健美·料理辅助S", pity: 62,
                  skillLevels: [
                      { food: 6,  critRate: 0.01 },
@@ -118,7 +118,7 @@ const SPECIAL_SKILL_MONS_DATA = {
                      { food: 24, critRate: 0.05 },
                  ],
     },
-    "正电拍拍": { dex: 311, interval: 2400, prob_f: 0.103, prob_s: 0.049, e_b: 137, e_f: 357.0, element: "电",
+    "正电拍拍": { dex: 311, interval: 2400, prob_f: 0.103, prob_s: 0.049, e_b: 137, e_f: 357.0, element: "电",avg_food: 2.333,
                  skillLabel: "正电·食材获取S", pity: 60, food_rival: "锹农炮虫",
                  skillLevels: [
                      { food: 5,  bonus: 6  },
@@ -130,7 +130,7 @@ const SPECIAL_SKILL_MONS_DATA = {
                      { food: 18, bonus: 12 },
                  ],
     },
-    "颤弦蝾螈·高调": { dex: 849, interval: 3100, prob_f: 0.239, prob_s: 0.064, e_b: 176, e_f: 228.7, element: "毒",
+    "颤弦蝾螈·高调": { dex: 849, interval: 3100, prob_f: 0.239, prob_s: 0.064, e_b: 176, e_f: 228.7, element: "毒",avg_food: 2.333,
                  skillLabel: "正电·食材获取S", pity: 46, food_rival: "水箭龟",
                  skillLevels: [
                      { food: 5,  bonus: 6  },
