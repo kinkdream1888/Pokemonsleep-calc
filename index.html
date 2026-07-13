@@ -416,7 +416,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.1.9.2</small>
+        <small>V0.1.9.3</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -495,6 +495,14 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.9.3', date: '2026-07-13', notes: [
+        '新增产能计算：所有宝可梦支持树果、食材、技能产能输出。',
+        '捕捉概率升级为基于效率比的组合遍历，更精确。',
+        '古月鸟/老翁龙专家对比实现动态面板。',
+        '请假王支持满包/无限持有双模式。',
+        '食材型列表补全，专家宝可梦可正常计算。',
+        '技能型特殊宝可梦输出技能次数与效果。'
+    ]},
     { version: 'V0.1.9.2', date: '2026-07-13', notes: [
         '新增咚咚鼠至技能型列表，专家食材宝可梦也可正常参与效率比与产能计算。',
         '修复专家对照逻辑：仅古月鸟/老翁龙与咚咚鼠对比技能次数。',
@@ -867,6 +875,12 @@ function onTypeChange() {
             opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
+        for (let mon of Object.keys(EXPERT_FOOD_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon + ' (专家)';
+            pokeSelect.appendChild(opt);
+        }
         pokeSelect.value = '__other__';
         natureSelect.disabled = false;
     } else if (currentType === '技能型') {
@@ -887,15 +901,17 @@ function onTypeChange() {
     } else if (currentType === '树果型') {
         pokeRow.style.display = 'flex';
         pokeSelect.innerHTML = '';
+        let optDefault = document.createElement('option');
+        optDefault.value = '__other__';
+        optDefault.textContent = '通用树果型';
+        pokeSelect.appendChild(optDefault);
         for (let mon of Object.keys(SPECIAL_BERRY_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
             opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
-        natureSelect.disabled = false;
-    } else {
-        pokeRow.style.display = 'none';
+        pokeSelect.value = '__other__';
         natureSelect.disabled = false;
     }
 
