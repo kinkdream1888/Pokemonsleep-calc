@@ -36,13 +36,13 @@ const LEGENDARY_MONS_DATA = {
                  skillLevels: [22, 31, 40, 49, 58, 68], skillLabel: "新月祈祷·活力全体疗愈S", pity: 62, element: "超能力",
                  interval: 2300, foodName: "姜" },
     "雷公": { dex: 243, interval: 2100, prob_f: 0.192, prob_s: 0.019, e_b: 137, e_s: 0, skillType: "helperBoost",
-               skillLevels: [0,0,0,0,0,11], element: "电", skillLabel: "帮手加速", pity: 68, foodName: "肠", e_f: 240
+               skillLevels: [0,0,0,0,0,11], element: "电", skillLabel: "帮手加速", pity: 68, foodName: "肠", e_f: 240,
                berry_count: 1, avg_food: 2.333 },
     "炎帝": { dex: 244, interval: 2400, prob_f: 0.187, prob_s: 0.023, e_b: 148, e_s: 0, skillType: "helperBoost",
-               skillLevels: [0,0,0,0,0,11], element: "火", skillLabel: "帮手加速", pity: 60, foodName: "油", e_f: 282
+               skillLevels: [0,0,0,0,0,11], element: "火", skillLabel: "帮手加速", pity: 60, foodName: "油", e_f: 282,
                berry_count: 1, avg_food: 2.333 },
     "水君": { dex: 245, interval: 2700, prob_f: 0.277, prob_s: 0.026, e_b: 170, e_s: 0, skillType: "helperBoost",
-               skillLevels: [0,0,0,0,0,11], element: "水", skillLabel: "帮手加速", pity: 53, foodName: "苹果", e_f: 210
+               skillLevels: [0,0,0,0,0,11], element: "水", skillLabel: "帮手加速", pity: 53, foodName: "苹果", e_f: 210,
                berry_count: 1, avg_food: 2.333 },
 };
 const PHANTOM_MONS_DATA = {
