@@ -55,20 +55,12 @@ function getFoodComboFactor() {
     };
     return factors[comboVal] || 1;
 }
-    return factors[comboVal] || 1;
-}
 
 function calculateProbability() {
     const probDiv = document.getElementById('probResult');
-    let selectedSubs = getSelectedSubs();
-    if (selectedSubs.length === 0) {
+    const selectedSubsRaw = getSelectedSubs();
+    if (selectedSubsRaw.length === 0) {
         probDiv.innerHTML = '※ 请至少选择一个副技能。';
-        probDiv.style.display = 'block';
-        return;
-    }
-    selectedSubs = selectedSubs.slice(0, simLevel);
-    if (selectedSubs.length === 0) {
-        probDiv.innerHTML = '※ 当前模拟等级下无副技能，请至少选择一个。';
         probDiv.style.display = 'block';
         return;
     }
@@ -78,6 +70,14 @@ function calculateProbability() {
     const currentNature = natureSelect.value;
     const lockGold = parseInt(document.getElementById('lockGold').value, 10);
     const simLevel = parseInt(document.getElementById('simLevel').value, 10);
+
+    // 根据模拟等级截取当前面板的副技能
+    let selectedSubs = selectedSubsRaw.slice(0, simLevel);
+    if (selectedSubs.length === 0) {
+        probDiv.innerHTML = '※ 当前模拟等级下无副技能，请至少选择一个。';
+        probDiv.style.display = 'block';
+        return;
+    }
 
     const currentTotal = calcEfficiencyValue(calcType, pokeName, selectedSubs, currentNature);
     if (currentTotal < 0) {
@@ -122,26 +122,25 @@ function calculateProbability() {
             const foodFactor = getFoodComboFactor();
             const finalRatio = baseRatio * foodFactor;
             const probabilityPercent = finalRatio * 100;
-            const rankPercent = (baseRatio * 100).toFixed(4);
 
             const subsText = selectedSubs.join(', ');
             const lockText = lockGold > 0 ? ` (锁${lockGold}金)` : '';
-            const levelText = simLevel === 4 ? '前4格(70级)' : '前3格(50级)';
+            const levelText = simLevel === 4 ? '前4格(70级)' : (simLevel === 3 ? '前3格(50级)' : '前2格(30级)');
             const comboText = document.getElementById('foodCombo').value;
 
-let html = `<strong>【捕捉概率估算】</strong><br>`;
-html += `当前配置: ${subsText} | ${currentNature} | ${levelText}${lockText}<br>`;
-html += `纯理论效率比: <b>${currentTotal.toFixed(4)}</b><br>`;
-if (subsText.includes('帮手奖励')) {
-    html += `<span style="color:#2980b9;">※ 帮手奖励已按最大团队加成(25%帮速)评估。</span><br>`;
-}
-html += `有效组合总数: ${totalCombos.toLocaleString()}<br>`;
-html += `不低于当前效率的组合: ${betterOrEqual.toLocaleString()}<br>`;
-html += `基础概率(副技能+性格): ${(baseRatio*100).toFixed(6)}%<br>`;
-if (foodFactor < 1) {
-    html += `食材组合因子: ×${foodFactor.toFixed(4)} (${comboText})<br>`;
-}
-html += `<span style="font-size:1.1em;color:#e67e22;">捕捉概率(≥当前效率): <b>${probabilityPercent.toFixed(6)}%</b></span>`;
+            let html = `<strong>【捕捉概率估算】</strong><br>`;
+            html += `当前配置: ${subsText} | ${currentNature} | ${levelText}${lockText}<br>`;
+            html += `纯理论效率比: <b>${currentTotal.toFixed(4)}</b><br>`;
+            if (subsText.includes('帮手奖励')) {
+                html += `<span style="color:#2980b9;">※ 帮手奖励已按最大团队加成(25%帮速)评估。</span><br>`;
+            }
+            html += `有效组合总数: ${totalCombos.toLocaleString()}<br>`;
+            html += `不低于当前效率的组合: ${betterOrEqual.toLocaleString()}<br>`;
+            html += `基础概率(副技能+性格): ${(baseRatio*100).toFixed(6)}%<br>`;
+            if (foodFactor < 1) {
+                html += `食材组合因子: ×${foodFactor.toFixed(4)} (${comboText})<br>`;
+            }
+            html += `<span style="font-size:1.1em;color:#e67e22;">捕捉概率(≥当前效率): <b>${probabilityPercent.toFixed(6)}%</b></span>`;
 
             probDiv.innerHTML = html;
         } catch (e) {
