@@ -343,7 +343,22 @@ function computeSkillProduction(mon, M_h, M_p, level) {
             perSkillDetail
         };
     }
-
+    
+    // 帮手加速（雷公、炎帝、水君）
+    if (mon.skillType === 'helperBoost') {
+        let boostTimes = typeof skillData === 'number' ? skillData : (skillData.boost || 11);
+        perSkillDetail = `让全队立刻完成55次帮忙（自身获得${boostTimes}次帮忙）`;
+        // 计算 boostTimes 次帮忙的树果和食材
+        let p_f = Math.min(mon.prob_f * 1.0, 1.0);
+        let avgFoodCount = mon.avg_food || 2.333;
+        let berryCountPerHelp = (mon.berry_count || 1);
+        let totalBerry = boostTimes * (1 - p_f) * berryCountPerHelp;
+        let totalFoodCount = boostTimes * p_f * avgFoodCount;
+        let totalEnergy = totalBerry * mon.e_b + totalFoodCount * (mon.e_f / avgFoodCount);
+        totalDetails.push(`获得树果${totalBerry.toFixed(1)}个, 能量${(totalBerry * mon.e_b).toFixed(0)}`);
+        totalDetails.push(`获得食材${totalFoodCount.toFixed(1)}个${mon.foodName || '食材'}, 能量${(totalFoodCount * (mon.e_f / avgFoodCount)).toFixed(0)}`);
+        return { food: totalFoodCount, energy: totalEnergy, details: totalDetails, foodMap, perSkillDetail };
+    }
     // 其他（能量填充等，包含能量填充M、树果遽增、传说、幻兽技能产出）
     // 需要返回技能能量等，用于实际能量输出
     if (mon.e_s !== undefined && !isFoodGetS && !isFoodSelectS && !isCookSuccessS) {
@@ -508,7 +523,11 @@ function calculate() {
                     lines.push(`技能产出: ${skillProd.details.join(', ')}`);
                 }
             }
-
+            // 未实装技能提示
+            if (mon.unfinished || (mon.skillLevels && mon.skillLevels.length === 0)) {
+                lines.push('');
+                lines.push('※ 该宝可梦的主技能尚未实装，产能计算暂不支持。');
+            }
             // 专家对比
             if (mon.food_rival && mon.skill_rival === '咚咚鼠') {
                 let rivalFoodMon = EXPERT_FOOD_MONS_DATA[mon.food_rival];
