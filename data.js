@@ -152,7 +152,8 @@ const SPECIAL_BERRY_MONS_DATA = {
     "请假王": { dex: 289, interval: 3600, prob_f: 0.339, prob_s: 0.067, e_b: 154, e_f: 513.3, element: "一般",
                  skillLabel: "食材获取S", pity: 78,
                  skillLevels: [6, 8, 11, 14, 17, 21, 24],
-                 dualMode: true
+                 dualMode: true,
+                 berry_count: 2, avg_food: 2.333, foodName: "番茄"
     },
 };
 const EXPERT_FOOD_MONS_DATA = {
