@@ -117,33 +117,6 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     return { total: typeof total === 'string' ? total : total.toFixed(4), improve: improve.toFixed ? improve.toFixed(2) : improve, M_h: M_h.toFixed(4), M_p: M_p.toFixed(4), M_f: M_f.toFixed(4) };
 }
 
-function computeHybridOutput(pokemonName, selectedSubs, nature, useRealistic) {
-    let mon = HYBRID_FOOD_MONS_DATA[pokemonName];
-    let baseInterval = mon.interval * 0.862;
-    let actualInterval = baseInterval * 0.45;
-    let baseHelps = 86400 / actualInterval;
-
-    let { speedMult: M_h, foodMult: M_f, skillMult: M_p } = calcMultipliers(selectedSubs, nature, false);
-
-    if (useRealistic) {
-        let coeff = REALISTIC_COEFF[pokemonName] || 0.92;
-        M_p *= coeff;
-    }
-
-    let dailyHelps = baseHelps * M_h;
-    let foodProb = Math.min(mon.prob_f * M_f, 1.0);
-    let foodCount = dailyHelps * foodProb * mon.avg_food;
-
-    let skillProb = mon.prob_s * M_p;
-    let skillCountNoSleep = dailyHelps * skillProb;
-    let skillCountSleep = skillCountNoSleep * mon.sleep_coef;
-
-    return {
-        foodCount, skillNoSleep: skillCountNoSleep, skillSleep: skillCountSleep,
-        M_h, M_f, M_p,
-    };
-}
-
 function helperOverflowAnalysis(selectedSubs, lines) {
     let hasHelper = selectedSubs.includes('帮手奖励');
     if (hasHelper) {
@@ -198,7 +171,7 @@ function getBaseHelps(mon) {
 
 function computeBerryProduction(mon, M_h, berryMult) {
     let dailyHelps = getBaseHelps(mon) * M_h;
-    let berryCount = dailyHelps * (mon.berry_count || 2) * berryMult; // 基础2果
+    let berryCount = dailyHelps * (mon.berry_count || 2) * berryMult;
     let berryEnergy = berryCount * mon.e_b;
     return { count: berryCount, energy: berryEnergy };
 }
@@ -208,7 +181,7 @@ function computeFoodProduction(mon, M_h, M_f) {
     let foodProb = Math.min(mon.prob_f * M_f, 1.0);
     let avgFood = mon.avg_food || 4.667;
     let foodCount = dailyHelps * foodProb * avgFood;
-    let foodEnergy = foodCount * (mon.e_f / avgFood); // 平均能量
+    let foodEnergy = foodCount * (mon.e_f / avgFood);
     return { count: foodCount, energy: foodEnergy };
 }
 
@@ -223,7 +196,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     let skillData = mon.skillLevels[level];
     if (!skillData) return { food: 0, energy: 0, details: [] };
 
-    // 普通食材获取S
     if (mon.skillLabel && mon.skillLabel.includes('食材获取S') && !mon.skillPool) {
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         return {
@@ -233,7 +205,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         };
     }
 
-    // 食材精选S等
     if (mon.skillPool && mon.skillPool.items) {
         let pool = mon.skillPool;
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
@@ -262,19 +233,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     return { food: 0, energy: 0, details: [] };
 }
 
-// 获取技能效果描述（用于非食材技能）
-function getSkillEffectText(mon, level) {
-    let data = mon.skillLevels[level];
-    if (!data) return '';
-    if (mon.skillLabel.includes('料理成功S')) {
-        return `暴击率+${data}% (累计)`;
-    }
-    if (mon.skillLabel.includes('能量填充M') || mon.skillLabel.includes('能量填充S')) {
-        return `能量: ${data}`;
-    }
-    return '';
-}
-
 function calculate() {
     let useRealistic = window.useRealistic || false;
     let calcType = typeSelect.value;
@@ -282,59 +240,80 @@ function calculate() {
     let selectedSubs = getSelectedSubs();
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
-    let M_h, M_p, M_f, berryMult;
-    if (selectedSubs.length > 0 || calcType === '树果型') {
-        let mults = calcMultipliers(selectedSubs, nature, false);
-        M_h = mults.speedMult;
-        M_p = mults.skillMult;
-        M_f = mults.foodMult;
-        berryMult = mults.berryMult;
-    } else {
-        M_h = M_f = M_p = berryMult = 1;
+    let baseMults = calcMultipliers(selectedSubs, nature, false);
+    let M_h = baseMults.speedMult;
+    let M_p = baseMults.skillMult;
+    let M_f = baseMults.foodMult;
+    let berryMult = baseMults.berryMult;
+
+    // 实战估算打折
+    let M_p_realistic = M_p;
+    if (useRealistic) {
+        if (calcType === '技能型') {
+            M_p_realistic *= SKILL_TYPE_REALISTIC_COEFF;
+        } else if (['能量填充M', '树果遽增', '食材型'].includes(calcType)) {
+            let coeff = REALISTIC_COEFF[pokeValue] || DEFAULT_REALISTIC_COEFF;
+            M_p_realistic *= coeff;
+        } else if (['传说宝可梦', '幻兽'].includes(calcType)) {
+            let coeff = REALISTIC_COEFF[pokeValue] || DEFAULT_REALISTIC_COEFF;
+            M_p_realistic *= coeff;
+        }
     }
 
-    // ========== 树果型（含请假王特殊处理） ==========
+    // ========== 树果型 ==========
     if (calcType === '树果型') {
         if (pokeValue && SPECIAL_BERRY_MONS_DATA[pokeValue]) {
             let mon = SPECIAL_BERRY_MONS_DATA[pokeValue];
             let lines = [];
             lines.push(`类型: 树果型 (${pokeValue})`);
             lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
+            lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)} | M_p: ${M_p.toFixed(4)}`);
 
-            // 满包模式
             let berryBoost = selectedSubs.includes('树果S') ? 1.5 : 1.0;
-            let fullBagTotal = M_h * berryBoost;
+            let total = M_h * berryBoost;
             lines.push('');
             lines.push('【满包模式】');
-            lines.push(`树果能量倍率: ${fullBagTotal.toFixed(4)} (${((fullBagTotal-1)*100).toFixed(2)}%)`);
+            lines.push(`树果倍率: <span style="color:#2980b9;font-weight:bold;">${total.toFixed(4)}</span> (${((total-1)*100).toFixed(2)}%)`);
 
-            // 无限持有模式
             let berryProd = computeBerryProduction(mon, M_h, berryMult);
             let foodProd = computeFoodProduction(mon, M_h, M_f);
-            let skillProd = computeSkillProduction(mon, M_h, M_p, 6);
+            let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, 6);
+            let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
             let totalEnergy = berryProd.energy + foodProd.energy + skillProd.energy;
             lines.push('');
             lines.push('【无限持有模式】');
             lines.push(`树果: ${berryProd.count.toFixed(1)}个, 能量: ${berryProd.energy.toFixed(0)}`);
             lines.push(`食材: ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
-            lines.push(`技能次数: ${computeSkillCount(mon, M_h, M_p).toFixed(2)}次`);
+            lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
             lines.push(`技能食材: ${skillProd.food.toFixed(1)}个, 能量: ${skillProd.energy.toFixed(0)}`);
             if (skillProd.details.length > 0) {
                 lines.push(`技能明细: ${skillProd.details.join(', ')}`);
             }
             lines.push(`总能量: ${totalEnergy.toFixed(0)}`);
 
+            helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
             return;
         }
         // 通用树果型
         let berryBoost = selectedSubs.includes('树果S') ? 1.5 : 1.0;
         let total = M_h * berryBoost;
-        let improve = (total - 1) * 100;
+        let soloResult = compute('树果型', '', selectedSubs, nature, false, false);
+        let hasHelper = selectedSubs.includes('帮手奖励');
+        let teamResult = hasHelper ? compute('树果型', '', selectedSubs, nature, true, false) : null;
         let lines = [];
         lines.push(`类型: 树果型 (通用树果型)`);
         lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
-        lines.push(`总倍率: ${total.toFixed(4)} (${improve.toFixed(2)}%)`);
+        lines.push(`M_h: ${M_h.toFixed(4)}`);
+        lines.push('');
+        lines.push('【理论倍率】');
+        if (hasHelper) {
+            lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+            lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${teamResult.total}</span> (${teamResult.improve}%)`);
+        } else {
+            lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${total.toFixed(4)}</span> (${((total-1)*100).toFixed(2)}%)`);
+        }
+        helperOverflowAnalysis(selectedSubs, lines);
         resultBox.innerHTML = lines.join('<br>');
         return;
     }
@@ -344,21 +323,33 @@ function calculate() {
         let mon = null;
         if (pokeValue && HYBRID_FOOD_MONS_DATA[pokeValue]) mon = HYBRID_FOOD_MONS_DATA[pokeValue];
         else if (pokeValue && EXPERT_FOOD_MONS_DATA[pokeValue]) mon = EXPERT_FOOD_MONS_DATA[pokeValue];
-        
+
         if (mon) {
             let foodProd = computeFoodProduction(mon, M_h, M_f);
-            let skillProd = computeSkillProduction(mon, M_h, M_p, mon.skillLevels.length - 1);
-            let skillCount = computeSkillCount(mon, M_h, M_p);
+            let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1);
+            let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
+            let soloResult = compute('食材型', pokeValue, selectedSubs, nature, false, false);
+            let hasHelper = selectedSubs.includes('帮手奖励');
+            let teamResult = hasHelper ? compute('食材型', pokeValue, selectedSubs, nature, true, false) : null;
 
             let lines = [];
             lines.push(`类型: 食材型 (${pokeValue})`);
             lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
-            lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
+            lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)} | M_p: ${M_p.toFixed(4)}`);
+            lines.push('');
+
+            lines.push('【理论倍率】');
+            if (hasHelper) {
+                lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+                lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${teamResult.total}</span> (${teamResult.improve}%)`);
+            } else {
+                lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+            }
+
             lines.push('');
             lines.push('【基础产能】');
             lines.push(`食材个数: ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
 
-            // 技能产能
             if (mon.skillLabel && (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('食材精选S'))) {
                 lines.push('');
                 lines.push('【技能产能】');
@@ -373,12 +364,12 @@ function calculate() {
                 lines.push(`技能次数: ${skillCount.toFixed(2)}次, 能量: ${(skillCount * mon.skillLevels[mon.skillLevels.length-1]).toFixed(0)}`);
             }
 
-            // 古月鸟/老翁龙特殊对比
+            // 专家对比
             if (mon.food_rival && mon.skill_rival === '咚咚鼠') {
                 let rivalFoodMon = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalSkillMon = SPECIAL_SKILL_MONS_DATA['咚咚鼠'];
                 let rivalFood = computeFoodProduction(rivalFoodMon, M_h, M_f);
-                let rivalSkillCount = computeSkillCount(rivalSkillMon, M_h, M_p);
+                let rivalSkillCount = computeSkillCount(rivalSkillMon, M_h, M_p_realistic);
                 let foodRatio = foodProd.count / rivalFood.count;
                 let skillRatio = skillCount / rivalSkillCount;
                 let totalRatio = foodRatio + skillRatio;
@@ -388,7 +379,6 @@ function calculate() {
                 lines.push(`技能比 (vs 咚咚鼠): ${skillRatio.toFixed(3)}`);
                 lines.push(`综合强度: ${totalRatio.toFixed(2)} 格`);
             } else if (mon.food_rival && !mon.skill_rival) {
-                // 大嘴娃、蝶结萌虻等：仅对比食材
                 let rivalMon = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rivalMon, M_h, M_f);
                 let foodRatio = foodProd.count / rivalFood.count;
@@ -397,21 +387,24 @@ function calculate() {
                 lines.push(`食材比 (vs ${mon.food_rival}): ${foodRatio.toFixed(3)}`);
             }
 
+            helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
             return;
         }
-        // 纯食材型（无匹配）
+        // 纯食材型
         let total = M_h * M_f;
         let improve = (total - 1) * 100;
         let lines = [];
         lines.push(`类型: 食材型 (其他)`);
+        lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
         lines.push(`M_h: ${M_h.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
         lines.push(`总倍率: ${total.toFixed(4)} (${improve.toFixed(2)}%)`);
+        helperOverflowAnalysis(selectedSubs, lines);
         resultBox.innerHTML = lines.join('<br>');
         return;
     }
 
-    // ========== 技能型（含特殊双修） ==========
+    // ========== 技能型 ==========
     if (calcType === '技能型') {
         if (pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue]) {
             let mon = SPECIAL_SKILL_MONS_DATA[pokeValue];
@@ -419,12 +412,29 @@ function calculate() {
                 resultBox.innerHTML = `<b>${pokeValue} 的数据尚未完成，无法计算。</b>`;
                 return;
             }
-            let skillCount = computeSkillCount(mon, M_h, M_p);
+            let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
             let foodProd = computeFoodProduction(mon, M_h, M_f);
-            let skillProd = computeSkillProduction(mon, M_h, M_p, mon.skillLevels.length - 1);
+            let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1);
+            let soloResult = compute('技能型', pokeValue, selectedSubs, nature, false, false);
+            let hasHelper = selectedSubs.includes('帮手奖励');
+            let teamResult = hasHelper ? compute('技能型', pokeValue, selectedSubs, nature, true, false) : null;
+
             let lines = [];
             lines.push(`类型: 技能型 (${pokeValue})`);
             lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
+            lines.push(`M_h: ${M_h.toFixed(4)} | M_p: ${M_p.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
+
+            lines.push('');
+            lines.push('【理论倍率】');
+            if (hasHelper) {
+                lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+                lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${teamResult.total}</span> (${teamResult.improve}%)`);
+            } else {
+                lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+            }
+
+            lines.push('');
+            lines.push('【技能产能】');
             lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
             if (mon.skillLabel && mon.skillLabel.includes('料理成功S')) {
                 lines.push(`技能效果: 暴击率+${mon.skillLevels[mon.skillLevels.length-1]}%`);
@@ -437,25 +447,40 @@ function calculate() {
             } else if (mon.skillLabel && mon.skillLabel.includes('正电·食材获取S')) {
                 lines.push(`自身食材: ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
                 lines.push(`技能食材: ${skillProd.food.toFixed(1)}个, 能量: ${skillProd.energy.toFixed(0)}`);
-                lines.push(`额外咖啡/牛奶: ${(mon.skillLevels[mon.skillLevels.length-1].bonus * skillCount).toFixed(1)}个`);
+                lines.push(`额外食材: ${(mon.skillLevels[mon.skillLevels.length-1].bonus * skillCount).toFixed(1)}个`);
             }
-            // 专家食材对比（如果有）
+
             if (mon.food_rival) {
                 let rival = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rival, M_h, M_f);
                 let totalSelfFood = foodProd.count + skillProd.food;
                 let ratio = totalSelfFood / rivalFood.count;
+                lines.push('');
+                lines.push('【专家对比】');
                 lines.push(`食材比 (vs ${mon.food_rival}): ${ratio.toFixed(3)}`);
             }
+
+            helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
             return;
         }
-        // 通用技能型（功能型）
-        let total = M_h * M_p;
-        let improve = (total - 1) * 100;
+        // 功能型
+        let soloResult = compute('技能型', '', selectedSubs, nature, false, false);
+        let hasHelper = selectedSubs.includes('帮手奖励');
+        let teamResult = hasHelper ? compute('技能型', '', selectedSubs, nature, true, false) : null;
         let lines = [];
         lines.push(`类型: 技能型 (功能型)`);
-        lines.push(`技能倍率: ${total.toFixed(4)} (${improve.toFixed(2)}%)`);
+        lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
+        lines.push(`M_h: ${M_h.toFixed(4)} | M_p: ${M_p.toFixed(4)} | M_f: ${M_f.toFixed(4)}`);
+        lines.push('');
+        lines.push('【理论倍率】');
+        if (hasHelper) {
+            lines.push(`单帮手: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+            lines.push(`5帮手: <span style="color:#2980b9;font-weight:bold;">${teamResult.total}</span> (${teamResult.improve}%)`);
+        } else {
+            lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
+        }
+        helperOverflowAnalysis(selectedSubs, lines);
         resultBox.innerHTML = lines.join('<br>');
         return;
     }
@@ -468,7 +493,7 @@ function calculate() {
         pokemonName = pokeSelect.value;
     }
 
-    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, false);
+    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, useRealistic);
     if (soloResult.total === "数据待补全") {
         resultBox.innerHTML = `<b>${pokeSelect.options[pokeSelect.selectedIndex].text} 的数据尚未完成，无法计算。</b>`;
         return;
@@ -476,7 +501,7 @@ function calculate() {
     
     let hasHelper = selectedSubs.includes('帮手奖励');
     let teamResult = null;
-    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, false);
+    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, useRealistic);
 
     let lines = [];
     let typeLabel = calcType;
