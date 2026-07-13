@@ -224,15 +224,34 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     let foodMap = {};
     if (!skillData) return { food: 0, energy: 0, details: [], foodMap: {} };
 
-    // 普通食材获取S (包括礼物·食材获取S)
+    // 普通食材获取S (包括礼物·食材获取S 及有bonus的)
     if (mon.skillLabel && (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('礼物·食材获取S')) && !mon.skillPool) {
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let perType = totalFood / 3;
+        let avgEnergy = EXACT_AVG_FOOD_ENERGY;
+        let baseFood = skillCount * totalFood;
+        let baseEnergy = baseFood * avgEnergy;
+        let details = [];
+        details.push(`随机三种食材各${perType.toFixed(1)}个 (每次技能)`);
+        if (typeof skillData === 'object' && skillData.bonus) {
+            let bonusItem = mon.foodName;
+            if (bonusItem) {
+                let bonusCount = skillData.bonus * skillCount;
+                baseFood += bonusCount;
+                baseEnergy += bonusCount * getFoodEnergy(bonusItem);
+                foodMap[bonusItem] = bonusCount;
+                details.push(`额外获得: ${bonusItem} ${bonusCount.toFixed(1)}个`);
+            }
+        }
+        // 信使鸟糖果效果仅提示
+        if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S') && typeof skillData === 'object' && skillData.critRate) {
+            details.push(`※ 暴击获得糖果（不产生能量）`);
+        }
         return {
-            food: skillCount * totalFood,
-            energy: skillCount * totalFood * EXACT_AVG_FOOD_ENERGY,
-            details: [`随机三种食材各${perType.toFixed(1)}个 (每次技能)`],
-            foodMap: {}
+            food: baseFood,
+            energy: baseEnergy,
+            details: details,
+            foodMap: foodMap
         };
     }
 
@@ -254,6 +273,12 @@ function computeSkillProduction(mon, M_h, M_p, level) {
             foodMap[items[i]] = (foodMap[items[i]] || 0) + totalItemCount;
             details.push(`${items[i]}: ${totalItemCount.toFixed(1)}个`);
         }
+        // 乌鸦头头梦碎提示
+        if (mon.skillLabel && mon.skillLabel.includes('超幸运') && typeof skillData === 'object' && skillData.shard4000) {
+            let shardLow = skillData.shard4000 * skillCount;
+            let shardHigh = skillData.shard20000 ? skillData.shard20000 * skillCount : 0;
+            details.push(`梦之碎片: 约${shardLow.toFixed(0)} (低概率${shardHigh.toFixed(0)})`);
+        }
         return {
             food: skillCount * expectedFood,
             energy: skillCount * expectedEnergy,
@@ -261,12 +286,14 @@ function computeSkillProduction(mon, M_h, M_p, level) {
             foodMap: foodMap
         };
     }
+    // 其他技能不产出食材，返回空
     return { food: 0, energy: 0, details: [], foodMap: {} };
 }
 
 function calculate() {
     let useRealistic = window.useRealistic || false;
     let calcType = typeSelect.value, nature = natureSelect.value;
+    // 只取前4个副技能，防止80级参与计算
     let selectedSubs = getSelectedSubs().slice(0, 4);
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
@@ -307,11 +334,10 @@ function calculate() {
             lines.push('');
             lines.push('【无限持有模式】');
             lines.push(`树果: ${berryProd.count.toFixed(1)}个, 能量: ${berryProd.energy.toFixed(0)}`);
-            lines.push(`食材: ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
+            lines.push(`食材(${mon.foodName}): ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
             lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
-            lines.push(`技能食材: ${skillProd.food.toFixed(1)}个, 能量: ${skillProd.energy.toFixed(0)}`);
             if (skillProd.details.length > 0) {
-                lines.push(`技能明细: ${skillProd.details.join(', ')}`);
+                lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
             }
             lines.push(`总能量: ${totalEnergy.toFixed(0)}`);
 
@@ -372,7 +398,7 @@ function calculate() {
             let foodName = mon.foodName || '食材';
             lines.push(`食材个数: ${foodProd.count.toFixed(1)}个${foodName}, 能量: ${foodProd.energy.toFixed(0)}`);
 
-            // 技能产能（跳过能量填充S的专家）
+            // 技能产能
             if (mon.skillLabel && (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('食材精选S') || mon.skillLabel.includes('料理成功S'))) {
                 lines.push('');
                 lines.push('【技能产能】');
@@ -380,9 +406,8 @@ function calculate() {
                 if (mon.skillLabel.includes('料理成功S')) {
                     lines.push(`技能效果: 暴击率+${mon.skillLevels[mon.skillLevels.length-1]}%`);
                 } else {
-                    lines.push(`技能食材: ${skillProd.food.toFixed(1)}个, 能量: ${skillProd.energy.toFixed(0)}`);
                     if (skillProd.details.length > 0) {
-                        lines.push(`每次技能期望: ${skillProd.details.join(', ')}`);
+                        lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
                     }
                 }
             }
@@ -403,13 +428,14 @@ function calculate() {
             } else if (mon.food_rival && !mon.skill_rival) {
                 let rivalMon = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rivalMon, M_h, M_f);
-                let skillProdForCompare = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1);
-                let skillMatchedFood = (mon.foodName && skillProdForCompare.foodMap) ? (skillProdForCompare.foodMap[mon.foodName] || 0) : 0;
+                let skillMatchedFood = (mon.foodName && skillProd.foodMap) ? (skillProd.foodMap[mon.foodName] || 0) : 0;
                 let totalSelf = foodProd.count + skillMatchedFood;
                 lines.push('');
                 lines.push('【专家对比】');
                 lines.push(`自身食材(${mon.foodName}): ${foodProd.count.toFixed(1)}个`);
-                lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                if (skillMatchedFood > 0) {
+                    lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                }
                 lines.push(`合计同类食材: ${totalSelf.toFixed(1)}个`);
                 lines.push(`专家(${mon.food_rival})食材: ${rivalFood.count.toFixed(1)}个`);
                 lines.push(`食材比: ${(totalSelf / rivalFood.count).toFixed(3)}`);
@@ -470,10 +496,13 @@ function calculate() {
             if (mon.skillLabel.includes('料理成功S')) {
                 lines.push(`效果: +${mon.skillLevels[mon.skillLevels.length-1]}%暴击率`);
             } else if (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('食材精选S')) {
-                lines.push(`自身食材: ${foodProd.count.toFixed(1)}个${mon.foodName || ''}, 能量: ${foodProd.energy.toFixed(0)}`);
-                lines.push(`技能食材: ${skillProd.food.toFixed(1)}个, 能量: ${skillProd.energy.toFixed(0)}`);
-                if (skillProd.details.length > 0) lines.push(`每次期望: ${skillProd.details.join(', ')}`);
+                let foodName = mon.foodName || '';
+                lines.push(`自身食材(${foodName}): ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
+                if (skillProd.details.length > 0) {
+                    lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
+                }
             }
+            // 专家对比
             if (mon.food_rival) {
                 let rival = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rival, M_h, M_f);
@@ -482,7 +511,9 @@ function calculate() {
                 lines.push('');
                 lines.push('【专家对比】');
                 lines.push(`自身食材(${mon.foodName}): ${foodProd.count.toFixed(1)}个`);
-                lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                if (skillMatchedFood > 0) {
+                    lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                }
                 lines.push(`合计同类食材: ${totalSelf.toFixed(1)}个`);
                 lines.push(`专家(${mon.food_rival})食材: ${rivalFood.count.toFixed(1)}个`);
                 lines.push(`食材比: ${(totalSelf / rivalFood.count).toFixed(3)}`);
