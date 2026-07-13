@@ -416,7 +416,7 @@
     <h2>
         <span class="pokeball-icon"></span>
         <span class="title-text">宝可梦Sleep 效率计算器</span>
-        <small>V0.2.0</small>
+        <small>V0.2.1</small>
         <button class="announce-btn" id="announceBtn" onclick="toggleAnnounce()">📢 更新公告</button>
     </h2>
     <div class="announce-panel" id="announcePanel">
@@ -460,6 +460,9 @@
     <div class="calc-buttons">
         <button class="btn" onclick="calculate()">计算效率</button>
         <button class="btn-realistic" id="realisticBtn" onclick="toggleRealistic()">实战预估</button>
+        <label style="font-size:0.8em; margin-left:10px;">
+            <input type="checkbox" id="favoredBerry" onchange="calculate()"> 喜爱树果
+        </label>
         <span class="realistic-hint">技能就绪的待机损耗</span>
     </div>
 
@@ -503,6 +506,13 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+{ version: 'V0.2.1', date: '2026-07-14', notes: [
+    '修复三神兽食材能量显示 NaN 的问题。',
+    '补充缺失的技能标签，所有宝可梦均可显示主技能名称。',
+    '新增“喜爱树果”选项，勾选后树果能量翻倍。',
+    '修复大葱鸭、阿勃梭鲁、穿着熊等宝可梦无法计算技能产出的问题。',
+    '修正新专家食材型宝可梦的食材能量偏小问题。'
+]},
 { version: 'V0.2.0', date: '2026-07-14', notes: [
     '新增传说宝可梦：雷公、炎帝、水君，主技能"帮手加速"（满级11次帮忙计算）。',
     '补全所有专家食材型宝可梦（大葱鸭、花岩怪、幸福蛋等），部分技能待后续实装。',
@@ -796,6 +806,9 @@ function updateSkillTag() {
         skillTag.style.display = 'inline-block';
     } else if (calcType === '技能型' && pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue] && SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel) {
         skillTag.textContent = SPECIAL_SKILL_MONS_DATA[pokeValue].skillLabel;
+        skillTag.style.display = 'inline-block';
+    } else if (calcType === '食材型' && pokeValue && EXPERT_FOOD_MONS_DATA[pokeValue] && EXPERT_FOOD_MONS_DATA[pokeValue].skillLabel) {
+        skillTag.textContent = EXPERT_FOOD_MONS_DATA[pokeValue].skillLabel;
         skillTag.style.display = 'inline-block';
     }
     // 能量填充M 技能标签
