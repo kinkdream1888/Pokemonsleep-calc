@@ -467,18 +467,18 @@
 
 <div class="prob-options">
     <button class="prob-btn" onclick="calculateProbability()">🎲 计算捕捉概率</button>
-    <select id="lockGold" style="width: 75px;">
+    <select id="lockGold" style="width: 60px; font-size: 0.8em;">
         <option value="0">锁0金</option>
         <option value="1">锁1金</option>
         <option value="2">锁2金</option>
         <option value="3">锁3金</option>
     </select>
-    <select id="simLevel" style="width: 105px;">
+    <select id="simLevel" style="width: 90px; font-size: 0.8em;">
         <option value="4">70级(前4格)</option>
         <option value="3">50级(前3格)</option>
     </select>
-    <select id="foodCombo" style="width: 105px;">
-        <option value="random">随机</option>
+    <select id="foodCombo" style="width: 90px; font-size: 0.8em;">
+        <option value="random">食材随机</option>
         <option value="AAA">AAA (1/9)</option>
         <option value="AAB">AAB (1/9)</option>
         <option value="AAC">AAC (1/9)</option>
@@ -503,12 +503,10 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
-    { version: 'V0.1.9.6', date: '2026-07-13', notes: [
-    '捕捉概率算法进一步优化：帮手奖励现在按团队最大收益(25%帮速)评估，更符合玩家实际组队价值。',
-    '算法核心改用有序排列，并严格支持锁金顺序过滤。',
-    '捕捉概率新增“食材组合”选项，支持 AAA、AAB 等组合及概率因子。',
-    '食材型与食材精选S技能型宝可梦默认选择 AAA 组合。',
-    '移除过时的“默认使用主性格”提示，界面更紧凑。'
+{ version: 'V0.1.9.6', date: '2026-07-13', notes: [
+    '重写捕捉概率算法：基于全组合遍历，排名更精确；帮手奖励按团队满收益计算。',
+    '新增食材组合选项，可指定 AAA 等组合，食材型/精选S技能型默认 AAA。',
+    '计算捕捉概率界面优化'
 ]},
     { version: 'V0.1.9.5', date: '2026-07-13', notes: [
     '重写捕捉概率算法：现在基于所有可能的副技能与性格组合进行精确排名，概率结果更科学。',
