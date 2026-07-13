@@ -235,8 +235,11 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let critValue = typeof skillData === 'object' ? (skillData.critRate || skillData) : skillData;
         if (typeof skillData === 'number') critValue = skillData;
         else if (typeof skillData === 'object' && skillData.food) critValue = skillData.critRate;
-        perSkillDetail = `料理漂亮成功的机率会提升${critValue}%`;
-        totalDetails.push(`料理漂亮成功的机率提升${critValue}%`);
+        // 统一显示为百分比：若 critValue < 1 则乘100
+        let displayCrit = critValue < 1 ? (critValue * 100) : critValue;
+        perSkillDetail = `料理漂亮成功的机率会提升${displayCrit}%`;
+        let totalCritIncrease = skillCount * displayCrit;
+        totalDetails.push(`漂亮成功率共提升${totalCritIncrease.toFixed(1)}%`);
         return { food: 0, energy: 0, details: totalDetails, foodMap, perSkillDetail };
     }
 
@@ -244,11 +247,13 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     if (isHeracross) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let critRate = typeof skillData === 'object' ? skillData.critRate : 0;
-        perSkillDetail = `随机获得${totalFood}个食材，并且料理漂亮成功的机率提升${critRate}%`;
+        let displayCrit = critRate < 1 ? (critRate * 100).toFixed(0) : critRate;
+        perSkillDetail = `随机获得${totalFood}个食材，并且料理漂亮成功的机率提升${displayCrit}%`;
         let baseFood = skillCount * totalFood;
         let baseEnergy = baseFood * EXACT_AVG_FOOD_ENERGY;
+        let totalCritIncrease = skillCount * critRate * 100;
         totalDetails.push(`获得食材${baseFood.toFixed(1)}个`);
-        totalDetails.push(`料理漂亮成功的机率提升${critRate}%`);
+        totalDetails.push(`漂亮成功率共提升${totalCritIncrease.toFixed(1)}%`);
         return { food: baseFood, energy: baseEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
@@ -261,8 +266,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S')) {
             let critRate = typeof skillData === 'object' && skillData.critRate ? skillData.critRate : 0;
             desc += `，有时额外获得4个糖果`;
-            let candyCount = skillCount * critRate * 4;
-            // 糖果将放入产出
         }
         // 正电/颤弦蝾螈
         if (typeof skillData === 'object' && skillData.bonus) {
@@ -310,7 +313,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let items = pool.items, probs = pool.itemProbs;
         let multipliers = pool.multipliers || probs.map(() => 1);
 
-        // 食材产出明细
         let foodDetails = [];
         for (let i = 0; i < items.length; i++) {
             let prob = probs[i], mult = multipliers[i];
@@ -324,7 +326,7 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         }
         totalDetails = foodDetails;
 
-        // 乌鸦头头梦碎（直接总期望）
+        // 乌鸦头头梦碎
         if (mon.skillLabel && mon.skillLabel.includes('超幸运') && typeof skillData === 'object' && skillData.shard4000) {
             let dreamProbs = mon.skillPool.dreamShardProbs || [0.112, 0.028];
             let shardLow = skillData.shard4000 * skillCount * dreamProbs[0];
@@ -389,7 +391,8 @@ function calculate() {
             lines.push('');
             lines.push('【无限持有模式】');
             lines.push(`树果: ${berryProd.count.toFixed(1)}个, 能量: ${berryProd.energy.toFixed(0)}`);
-            lines.push(`食材: ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
+            let foodName = mon.foodName ? mon.foodName : '';
+            lines.push(`食材: ${foodProd.count.toFixed(1)}个${foodName}, 能量: ${foodProd.energy.toFixed(0)}`);
             lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
             if (skillProd.perSkillDetail) {
                 lines.push(`技能效果: ${skillProd.perSkillDetail}`);
@@ -545,15 +548,18 @@ function calculate() {
             } else {
                 lines.push(`总倍率: <span style="color:#2980b9;font-weight:bold;">${soloResult.total}</span> (${soloResult.improve}%)`);
             }
+
+            // 基础产能（自身食材）
+            let hasOwnFood = mon.prob_f > 0 && mon.foodName;
+            if (hasOwnFood) {
+                lines.push('');
+                lines.push('【基础产能】');
+                lines.push(`食材: ${foodProd.count.toFixed(1)}个${mon.foodName}, 能量: ${foodProd.energy.toFixed(0)}`);
+            }
+
             lines.push('');
             lines.push('【技能产能】');
             lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
-
-            // 自身食材（仅当有食材产出时显示）
-            if (mon.prob_f > 0) {
-                let foodName = mon.foodName || '';
-                lines.push(`自身食材(${foodName}): ${foodProd.count.toFixed(1)}个, 能量: ${foodProd.energy.toFixed(0)}`);
-            }
 
             if (skillProd.perSkillDetail) {
                 lines.push(`技能效果: ${skillProd.perSkillDetail}`);
