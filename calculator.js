@@ -267,7 +267,7 @@ function computeSkillProduction(mon, M_h, M_p, level) {
 function calculate() {
     let useRealistic = window.useRealistic || false;
     let calcType = typeSelect.value, nature = natureSelect.value;
-    let selectedSubs = getSelectedSubs();
+    let selectedSubs = getSelectedSubs().slice(0, 4);
     let pokeValue = pokeSelect ? pokeSelect.value : null;
 
     let baseMults = calcMultipliers(selectedSubs, nature, false);
