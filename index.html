@@ -878,7 +878,7 @@ function onTypeChange() {
         for (let mon of Object.keys(EXPERT_FOOD_MONS_DATA)) {
             let opt = document.createElement('option');
             opt.value = mon;
-            opt.textContent = mon + ' (专家)';
+            opt.textContent = mon;
             pokeSelect.appendChild(opt);
         }
         pokeSelect.value = '__other__';
