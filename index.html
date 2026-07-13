@@ -497,7 +497,8 @@
 const UPDATE_LOG = [
     { version: 'V0.1.9.4', date: '2026-07-13', notes: [
         '修复部分技能型宝可梦（穿山王、水伊布等）的产量问题。',
-        '食材产能计算已恢复。'
+        '食材产能计算功能已恢复。'
+        '修复主界面的显示问题',
     ]},
     { version: 'V0.1.9.3', date: '2026-07-13', notes: [
         '新增产能计算：所有宝可梦支持树果、食材、技能产能输出。',
@@ -917,6 +918,9 @@ function onTypeChange() {
         }
         pokeSelect.value = '__other__';
         natureSelect.disabled = false;
+    } else {
+        pokeRow.style.display = 'none';
+        natureSelect.disabled = false;
     }
 
     maxSubs = 4;
@@ -1030,6 +1034,9 @@ document.addEventListener('click', function(e) {
         setTimeout(() => target.blur(), 50);
     }
 });
+
+// 初始化界面
+onTypeChange();
 </script>
 </body>
 </html>
