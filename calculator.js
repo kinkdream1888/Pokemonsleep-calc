@@ -222,35 +222,62 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     let skillCount = computeSkillCount(mon, M_h, M_p);
     let skillData = mon.skillLevels[level];
     let foodMap = {};
-    if (!skillData) return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '' };
+    let candy = 0, dreamShards = null;
+    if (!skillData) return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '', candy: 0, dreamShards: null };
 
     let totalFood, perSkillDetail = '', totalDetails = [];
     let isFoodGetS = mon.skillLabel && (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('礼物·食材获取S')) && !mon.skillPool;
     let isFoodSelectS = mon.skillPool && mon.skillPool.items;
 
-    // 普通食材获取S（含礼物·食材获取S）
+    // 普通食材获取S（含礼物·食材获取S、正电/颤弦蝾螈）
     if (isFoodGetS) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let perType = totalFood / 3;
         perSkillDetail = `随机三种食材各${perType.toFixed(1)}个`;
+
+        // 礼物·食材获取S：暴击糖果
         if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S')) {
-            let crit = typeof skillData === 'object' && skillData.critRate ? (skillData.critRate * 100).toFixed(1) : '';
-            perSkillDetail += `，${crit}%暴击额外获得4个糖果`;
+            let critRate = typeof skillData === 'object' && skillData.critRate ? skillData.critRate : 0;
+            perSkillDetail += `，${(critRate*100).toFixed(1)}%暴击额外获得4个糖果`;
+            candy = skillCount * critRate * 4;
         }
+
+        // 正电拍拍/颤弦蝾螈：额外食材
+        if (typeof skillData === 'object' && skillData.bonus) {
+            let bonusItem = mon.foodName;
+            if (bonusItem) {
+                let bonusPerSkill = skillData.bonus;
+                perSkillDetail += `，额外获得${bonusItem}${bonusPerSkill}个`;
+                let bonusCount = bonusPerSkill * skillCount;
+                foodMap[bonusItem] = bonusCount;
+                // 总食材和能量将在下面统一计算
+            }
+        }
+
         let baseFood = skillCount * totalFood;
         let baseEnergy = baseFood * EXACT_AVG_FOOD_ENERGY;
         totalDetails.push(`随机三种食材各${(perType * skillCount).toFixed(1)}个 (总食材${baseFood.toFixed(1)}个)`);
+
+        // 额外食材加入产出
         if (typeof skillData === 'object' && skillData.bonus) {
             let bonusItem = mon.foodName;
             if (bonusItem) {
                 let bonusCount = skillData.bonus * skillCount;
                 baseFood += bonusCount;
                 baseEnergy += bonusCount * getFoodEnergy(bonusItem);
-                foodMap[bonusItem] = bonusCount;
                 totalDetails.push(`额外获得: ${bonusItem} ${bonusCount.toFixed(1)}个`);
             }
         }
-        return { food: baseFood, energy: baseEnergy, details: totalDetails, foodMap, perSkillDetail };
+
+        return {
+            food: baseFood,
+            energy: baseEnergy,
+            details: totalDetails,
+            foodMap,
+            perSkillDetail,
+            candy,
+            dreamShards: null
+        };
     }
 
     // 食材精选S / 怪力钳等
@@ -261,6 +288,21 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let expectedFood = 0, expectedEnergy = 0;
         let items = pool.items, probs = pool.itemProbs;
         let multipliers = pool.multipliers || probs.map(() => 1);
+
+        // 构建技能效果描述
+        let isNormalSelect = (!mon.skillLabel || !mon.skillLabel.includes('怪力钳')); // 普通精选S
+        let isMawile = mon.skillLabel && mon.skillLabel.includes('怪力钳');
+        let descParts = [];
+        let totalOptions = items.length;
+
+        if (isNormalSelect) {
+            descParts.push(`从特定食材中随机获得${totalFood}个其中1种食材`);
+        } else if (isMawile) {
+            descParts.push(`从特定食材中随机获得18个其中1种食材，有时获得36个`);
+        }
+        perSkillDetail = descParts.join('，');
+
+        // 计算期望产出及详细
         for (let i = 0; i < items.length; i++) {
             let prob = probs[i], mult = multipliers[i];
             let itemEnergy = getFoodEnergy(items[i]);
@@ -272,18 +314,35 @@ function computeSkillProduction(mon, M_h, M_p, level) {
             perSkillDetails.push(`${items[i]}: ${perSkillCount.toFixed(1)}个`);
             totalDetails.push(`${items[i]}: ${totalItemCount.toFixed(1)}个`);
         }
-        perSkillDetail = perSkillDetails.join(', ');
-        // 乌鸦头头梦碎
+
+        // 乌鸦头头梦碎处理
         if (mon.skillLabel && mon.skillLabel.includes('超幸运') && typeof skillData === 'object' && skillData.shard4000) {
-            let shardLow = skillData.shard4000 * skillCount;
-            let shardHigh = skillData.shard20000 ? skillData.shard20000 * skillCount : 0;
-            totalDetails.push(`梦之碎片: 约${shardLow.toFixed(0)} (低概率${shardHigh.toFixed(0)})`);
+            let dreamProbs = mon.skillPool.dreamShardProbs || [0.112, 0.028];
+            let shard4000Prob = dreamProbs[0];
+            let shard20000Prob = dreamProbs[1];
+            let shardLowCount = skillData.shard4000 * skillCount * shard4000Prob;
+            let shardHighCount = skillData.shard20000 * skillCount * shard20000Prob;
+            dreamShards = {
+                low: { amount: skillData.shard4000, count: shardLowCount, prob: shard4000Prob },
+                high: { amount: skillData.shard20000, count: shardHighCount, prob: shard20000Prob }
+            };
+            // 添加梦碎行到 totalDetails
+            totalDetails.push(`梦之碎片: 约${shardLowCount.toFixed(0)} (概率${(shard4000Prob*100).toFixed(1)}%), 约${shardHighCount.toFixed(0)} (概率${(shard20000Prob*100).toFixed(1)}%)`);
         }
-        return { food: skillCount * expectedFood, energy: skillCount * expectedEnergy, details: totalDetails, foodMap, perSkillDetail };
+
+        return {
+            food: skillCount * expectedFood,
+            energy: skillCount * expectedEnergy,
+            details: totalDetails,
+            foodMap,
+            perSkillDetail,
+            candy: 0,
+            dreamShards
+        };
     }
 
     // 其他技能（料理成功S、能量填充等）无食材产出
-    return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '' };
+    return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '', candy: 0, dreamShards: null };
 }
 
 function calculate() {
@@ -336,6 +395,9 @@ function calculate() {
             }
             if (skillProd.details.length > 0) {
                 lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
+            }
+            if (skillProd.candy > 0) {
+                lines.push(`糖果: ${skillProd.candy.toFixed(1)}个`);
             }
             lines.push(`总能量: ${totalEnergy.toFixed(0)}`);
 
@@ -409,6 +471,9 @@ function calculate() {
                     }
                     if (skillProd.details.length > 0) {
                         lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
+                    }
+                    if (skillProd.candy > 0) {
+                        lines.push(`糖果: ${skillProd.candy.toFixed(1)}个`);
                     }
                 }
             }
@@ -504,6 +569,9 @@ function calculate() {
                 }
                 if (skillProd.details.length > 0) {
                     lines.push(`技能食材产出: ${skillProd.details.join(', ')}`);
+                }
+                if (skillProd.candy > 0) {
+                    lines.push(`糖果: ${skillProd.candy.toFixed(1)}个`);
                 }
             }
             // 专家对比
