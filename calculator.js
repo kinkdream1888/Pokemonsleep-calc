@@ -532,8 +532,8 @@ function calculate() {
         let realisticTeam = null;
         if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true);
         lines.push('');
-        lines.push('【实战估算】');
-        lines.push(`M_p (打折后): ${realisticSolo.M_p}`);
+        lines.push('【实战预估】');
+        lines.push(`M_p (实际损耗): ${realisticSolo.M_p}`);
         if (hasHelper) {
             lines.push(`单帮手: <span style="color:#27ae60;font-weight:bold;">${realisticSolo.total}</span> (${realisticSolo.improve}%)`);
             lines.push(`5帮手: <span style="color:#27ae60;font-weight:bold;">${realisticTeam.total}</span> (${realisticTeam.improve}%)`);
