@@ -221,7 +221,8 @@ function computeSkillCount(mon, M_h, M_p) {
 function computeSkillProduction(mon, M_h, M_p, level) {
     let skillCount = computeSkillCount(mon, M_h, M_p);
     let skillData = mon.skillLevels[level];
-    if (!skillData) return { food: 0, energy: 0, details: [] };
+    let foodMap = {};
+    if (!skillData) return { food: 0, energy: 0, details: [], foodMap: {} };
 
     // 普通食材获取S (包括礼物·食材获取S)
     if (mon.skillLabel && (mon.skillLabel.includes('食材获取S') || mon.skillLabel.includes('礼物·食材获取S')) && !mon.skillPool) {
@@ -230,7 +231,8 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         return {
             food: skillCount * totalFood,
             energy: skillCount * totalFood * EXACT_AVG_FOOD_ENERGY,
-            details: [`随机三种食材各${perType.toFixed(1)}个 (每次技能)`]
+            details: [`随机三种食材各${perType.toFixed(1)}个 (每次技能)`],
+            foodMap: {}
         };
     }
 
@@ -245,18 +247,21 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         for (let i = 0; i < items.length; i++) {
             let prob = probs[i], mult = multipliers[i];
             let itemEnergy = getFoodEnergy(items[i]);
-            let perSkill = totalFood * prob * mult;
-            expectedFood += perSkill;
-            expectedEnergy += perSkill * itemEnergy;
-            details.push(`${items[i]}: ${(perSkill * skillCount).toFixed(1)}个`);
+            let perSkillCount = totalFood * prob * mult;
+            expectedFood += perSkillCount;
+            expectedEnergy += perSkillCount * itemEnergy;
+            let totalItemCount = perSkillCount * skillCount;
+            foodMap[items[i]] = (foodMap[items[i]] || 0) + totalItemCount;
+            details.push(`${items[i]}: ${totalItemCount.toFixed(1)}个`);
         }
         return {
             food: skillCount * expectedFood,
             energy: skillCount * expectedEnergy,
-            details: details
+            details: details,
+            foodMap: foodMap
         };
     }
-    return { food: 0, energy: 0, details: [] };
+    return { food: 0, energy: 0, details: [], foodMap: {} };
 }
 
 function calculate() {
@@ -398,9 +403,16 @@ function calculate() {
             } else if (mon.food_rival && !mon.skill_rival) {
                 let rivalMon = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rivalMon, M_h, M_f);
+                let skillProdForCompare = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1);
+                let skillMatchedFood = (mon.foodName && skillProdForCompare.foodMap) ? (skillProdForCompare.foodMap[mon.foodName] || 0) : 0;
+                let totalSelf = foodProd.count + skillMatchedFood;
                 lines.push('');
                 lines.push('【专家对比】');
-                lines.push(`食材比 (vs ${mon.food_rival}): ${(foodProd.count / rivalFood.count).toFixed(3)}`);
+                lines.push(`自身食材(${mon.foodName}): ${foodProd.count.toFixed(1)}个`);
+                lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                lines.push(`合计同类食材: ${totalSelf.toFixed(1)}个`);
+                lines.push(`专家(${mon.food_rival})食材: ${rivalFood.count.toFixed(1)}个`);
+                lines.push(`食材比: ${(totalSelf / rivalFood.count).toFixed(3)}`);
             }
 
             helperOverflowAnalysis(selectedSubs, lines);
@@ -465,10 +477,15 @@ function calculate() {
             if (mon.food_rival) {
                 let rival = EXPERT_FOOD_MONS_DATA[mon.food_rival];
                 let rivalFood = computeFoodProduction(rival, M_h, M_f);
-                let totalSelf = foodProd.count + skillProd.food;
+                let skillMatchedFood = (mon.foodName && skillProd.foodMap) ? (skillProd.foodMap[mon.foodName] || 0) : 0;
+                let totalSelf = foodProd.count + skillMatchedFood;
                 lines.push('');
                 lines.push('【专家对比】');
-                lines.push(`食材比 (vs ${mon.food_rival}): ${(totalSelf / rivalFood.count).toFixed(3)}`);
+                lines.push(`自身食材(${mon.foodName}): ${foodProd.count.toFixed(1)}个`);
+                lines.push(`技能产出匹配食材(${mon.foodName}): ${skillMatchedFood.toFixed(1)}个`);
+                lines.push(`合计同类食材: ${totalSelf.toFixed(1)}个`);
+                lines.push(`专家(${mon.food_rival})食材: ${rivalFood.count.toFixed(1)}个`);
+                lines.push(`食材比: ${(totalSelf / rivalFood.count).toFixed(3)}`);
             }
             helperOverflowAnalysis(selectedSubs, lines);
             resultBox.innerHTML = lines.join('<br>');
