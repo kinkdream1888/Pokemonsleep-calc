@@ -304,10 +304,16 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     }
 
     // 食材精选S（穿山王、岩殿居蟹、乌鸦头头、蝶结萌虻、大嘴娃等）
+    // 食材精选S（穿山王、岩殿居蟹、乌鸦头头、蝶结萌虻、大嘴娃等）
     if (isFoodSelectS) {
         let pool = mon.skillPool;
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
-        perSkillDetail = `从特定食材中随机获得${totalFood}个其中1种食材`;
+        // 大嘴娃特殊描述：有概率双倍
+        if (mon.skillLabel && mon.skillLabel.includes('怪力钳')) {
+            perSkillDetail = `从特定食材中随机获得18个其中1种食材（有时获得36个）`;
+        } else {
+            perSkillDetail = `从特定食材中随机获得${totalFood}个其中1种食材`;
+        }
 
         let expectedFood = 0, expectedEnergy = 0;
         let items = pool.items, probs = pool.itemProbs;
