@@ -2,34 +2,39 @@
 const ENERGY_MONS_DATA = {
     "电龙":    { dex: 181, prob_f: 0.130, e_f: 536.7, prob_s: 0.047, e_b: 137, e_s: 6858,
                  skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "电",
-                 skillLabel: "能量填充M" },
+                 skillLabel: "能量填充M", interval: 2500, pity: 57, foodName: "香草" },
     "树才怪":  { dex: 185, prob_f: 0.217, e_f: 466.7, prob_s: 0.072, e_b: 165, e_s: 6858,
                  skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "岩石",
-                 skillLabel: "能量填充M" },
+                 skillLabel: "能量填充M", interval: 4000, pity: 36, foodName: "番茄" },
     "太阳伊布": { dex: 196, prob_f: 0.164, e_f: 228.7, prob_s: 0.044, e_b: 143, e_s: 6858,
                  skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "超能力",
-                 skillLabel: "能量填充M" },
+                 skillLabel: "能量填充M", interval: 2400, pity: 60, foodName: "牛奶" },
     "音波龙":  { dex: 715, prob_f: 0.195, e_f: 420.0, prob_s: 0.048, e_b: 192, e_s: 6858,
                  skillLevels: [880, 1251, 1726, 2383, 3290, 4546, 6858], element: "龙",
-                 skillLabel: "能量填充M" },
+                 skillLabel: "能量填充M", interval: 2700, pity: 53, foodName: "苹果" },
 };
 const BERRY_BOOST_MONS_DATA = {
     "蜥蜴王":  { dex: 254, prob_f: 0.107, e_f: 471.3, prob_s: 0.030, e_b: 165, e_s: 50,
                  skillLevels: [15, 22, 29, 36, 43, 50], element: "草",
-                 skillLabel: "树果遽增", interval: 2300 },
+                 skillLabel: "树果遽增", interval: 2300, pity: 62, foodName: "蛋" },
     "勇士雄鹰": { dex: 628, prob_f: 0.121, e_f: 466.7, prob_s: 0.035, e_b: 132, e_s: 50,
                  skillLevels: [15, 22, 29, 36, 43, 50], element: "飞行",
-                 skillLabel: "树果遽增", interval: 2400 },
+                 skillLabel: "树果遽增", interval: 2400, pity: 60, foodName: "肠" },
     "谜拟Q":   { dex: 778, prob_f: 0.153, e_f: 357.0, prob_s: 0.035, e_b: 143, e_s: 41,
                  skillLevels: [12, 18, 23, 29, 35, 41], element: "幽灵",
-                 skillLabel: "画皮·树果遽增", interval: 2500,
+                 skillLabel: "画皮·树果遽增", interval: 2500, pity: 57, foodName: "苹果",
                  critRate: 0.185, critMultiplier: 3 },
+    "烈焰猴":  { dex: 392, prob_f: 0.106, e_f: 130, prob_s: 0.033, e_b: 148, e_s: 50,
+                 skillLevels: [15, 22, 29, 36, 43, 50], element: "格斗",
+                 skillLabel: "树果遽增", interval: 2400, pity: 60, foodName: "香草" },
 };
 const LEGENDARY_MONS_DATA = {
     "拉帝欧斯": { dex: 381, prob_f: 0.198, e_f: 256.6, prob_s: 0.030, e_b: 192, e_s: 78, e_s_is_berry: true,
-                 skillLevels: [28, 41, 53, 65, 73, 78], skillLabel: "流星群·树果遽增", pity: 63, element: "龙" },
+                 skillLevels: [28, 41, 53, 65, 73, 78], skillLabel: "流星群·树果遽增", pity: 51, element: "龙",
+                 interval: 2800, foodName: "番茄" },
     "克雷色利亚": { dex: 488, prob_f: 0.239, e_f: 254.3, prob_s: 0.041, e_b: 143, e_s: 68, e_s_is_berry: true,
-                 skillLevels: [22, 31, 40, 49, 58, 68], skillLabel: "新月祈祷·活力全体疗愈S", pity: 62, element: "超能力" },
+                 skillLevels: [22, 31, 40, 49, 58, 68], skillLabel: "新月祈祷·活力全体疗愈S", pity: 62, element: "超能力",
+                 interval: 2300, foodName: "姜" },
     "雷公": { dex: 243, unfinished: true, skillLabel: "帮手加速", element: "电" },
     "炎帝": { dex: 244, unfinished: true, skillLabel: "帮手加速", element: "火" },
     "水君": { dex: 245, unfinished: true, skillLabel: "帮手加速", element: "水" },
@@ -38,7 +43,7 @@ const PHANTOM_MONS_DATA = {
     "达克莱伊": { dex: 491, prob_f: 0.192, e_f: 459.0, prob_s: 0.03345, e_b: 170, e_s: 18515, e_s_is_berry: false,
                  skillLevels: [2620, 3753, 5178, 7149, 9870, 13638, 18515],
                  skillLabel: "梦魇·能量填充M", pity: 49, sleep_coef: 0.951, realistic_coef: 0.86,
-                 berry_count: 2, food_dist: [2,3,4], element: "恶" },
+                 berry_count: 2, food_dist: [2,3,4], element: "恶", interval: 2900, foodName: "咖啡" },
 };
 const HYBRID_FOOD_MONS_DATA = {
     "古月鸟": { dex: 845, interval: 2700, prob_f: 0.165, avg_food: 4.667, prob_s: 0.039,
@@ -183,15 +188,9 @@ const EXPERT_FOOD_MONS_DATA = {
                  skillLabel: "能量填充S", skillLevels: [400, 569, 785, 1083, 1496, 2066, 3212], element: "幽灵" },
 };
 
-const EXPERT_GRAD_DATA = {
-    "毒骷蛙": { food: 123.04, desc: "帮M+食概M+性格帮" },
-    "隆隆岩": { food: 164.99, desc: "帮M+食概M+性格帮" },
-    "咚咚鼠": { skill: 7.23, skill_sleep: 6.34, desc: "帮M+技概M+性格帮" },
-};
-
 const REALISTIC_COEFF = {
     "电龙": 0.92, "树才怪": 0.90, "太阳伊布": 0.92, "音波龙": 0.92,
-    "蜥蜴王": 0.95, "勇士雄鹰": 0.94, "谜拟Q": 0.94,
+    "蜥蜴王": 0.95, "勇士雄鹰": 0.94, "谜拟Q": 0.94, "烈焰猴": 0.95,
     "拉帝欧斯": 0.93, "克雷色利亚": 0.91, "古月鸟": 0.88, "老翁龙": 0.88,
     "达克莱伊": 0.86, "大嘴娃": 0.88, "蝶结萌虻": 0.88, "穿山王": 0.88, "岩殿居蟹": 0.88, "乌鸦头头": 0.88,
     "水伊布": 0.88, "赫拉克罗斯": 0.88, "正电拍拍": 0.88, "颤弦蝾螈·高调": 0.88, "请假王": 0.79, "咚咚鼠": 0.88,
