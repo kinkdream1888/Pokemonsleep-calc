@@ -248,7 +248,7 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let critRate = typeof skillData === 'object' ? skillData.critRate : 0;
         let displayCrit = critRate < 1 ? (critRate * 100).toFixed(0) : critRate;
-        perSkillDetail = `随机获得${totalFood}个食材，并且料理漂亮成功的机率提升${displayCrit}%`;
+        perSkillDetail = `随机获得${totalFood}个食材，并且料理漂亮成功的机率会提升${displayCrit}%`;
         let baseFood = skillCount * totalFood;
         let baseEnergy = baseFood * EXACT_AVG_FOOD_ENERGY;
         let totalCritIncrease = skillCount * critRate * 100;
@@ -365,11 +365,15 @@ function calculate() {
 
     let M_p_realistic = M_p;
     if (useRealistic) {
-        if (calcType === '技能型') M_p_realistic *= SKILL_TYPE_REALISTIC_COEFF;
-        else if (['能量填充M', '树果遽增', '食材型'].includes(calcType))
+        if (calcType === '技能型') {
+            M_p_realistic *= SKILL_TYPE_REALISTIC_COEFF;
+        } else if (calcType === '树果型' && pokeValue && SPECIAL_BERRY_MONS_DATA[pokeValue]) {
             M_p_realistic *= (REALISTIC_COEFF[pokeValue] || DEFAULT_REALISTIC_COEFF);
-        else if (['传说宝可梦', '幻兽'].includes(calcType))
+        } else if (['能量填充M', '树果遽增', '食材型'].includes(calcType)) {
             M_p_realistic *= (REALISTIC_COEFF[pokeValue] || DEFAULT_REALISTIC_COEFF);
+        } else if (['传说宝可梦', '幻兽'].includes(calcType)) {
+            M_p_realistic *= (REALISTIC_COEFF[pokeValue] || DEFAULT_REALISTIC_COEFF);
+        }
     }
 
     let hasHelper = selectedSubs.includes('帮手奖励');
