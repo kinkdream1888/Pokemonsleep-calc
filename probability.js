@@ -5,7 +5,6 @@ const natureList = Object.keys(NATURES);
 const allSkills = Object.keys(SUB_SKILLS);
 const goldSkills = new Set(['树果S', '帮手奖励', '睡眠EXP奖励', '研究EXP奖励', '活力回复奖励', '梦之碎片奖励', '技能等级M']);
 
-// 有序排列生成
 function generatePermutations(skills, len) {
     if (len === 0) return [[]];
     const result = [];
@@ -19,7 +18,6 @@ function generatePermutations(skills, len) {
     return result;
 }
 
-// 计算纯理论效率值，若包含帮手奖励则使用团队满配加成
 function calcEfficiencyValue(calcType, pokeName, subs, nature) {
     const useTeam = subs.includes('帮手奖励');
     const result = compute(calcType, pokeName, subs, nature, useTeam, false);
@@ -27,7 +25,6 @@ function calcEfficiencyValue(calcType, pokeName, subs, nature) {
     return parseFloat(result.total);
 }
 
-// 构建缓存
 function buildCache(calcType, pokeName, simLevel) {
     const key = `${calcType}|${pokeName}|${simLevel}`;
     if (efficiencyCache.has(key)) return;
@@ -44,7 +41,32 @@ function buildCache(calcType, pokeName, simLevel) {
     efficiencyCache.set(key, { permList: perms, effMatrix });
 }
 
-// 主概率计算
+function getFoodComboFactor(calcType, pokeName) {
+    const comboVal = document.getElementById('foodCombo').value;
+    if (comboVal === 'random') return 1;
+
+    let apply = false;
+    if (calcType === '食材型') {
+        apply = true;
+    } else if (calcType === '技能型' && pokeName && SPECIAL_SKILL_MONS_DATA[pokeName]) {
+        const mon = SPECIAL_SKILL_MONS_DATA[pokeName];
+        if (mon.skillLabel && mon.skillLabel.includes('食材精选S')) {
+            apply = true;
+        }
+    }
+    if (!apply) return 1;
+
+    const factors = {
+        'AAA': 1/9,
+        'AAB': 1/9,
+        'AAC': 1/9,
+        'ABB': 2/9,
+        'ABA': 2/9,
+        'ABC': 2/9
+    };
+    return factors[comboVal] || 1;
+}
+
 function calculateProbability() {
     const probDiv = document.getElementById('probResult');
     const selectedSubs = getSelectedSubs();
@@ -60,7 +82,6 @@ function calculateProbability() {
     const lockGold = parseInt(document.getElementById('lockGold').value, 10);
     const simLevel = parseInt(document.getElementById('simLevel').value, 10);
 
-    // 计算当前面板效率（同样启用团队加成若包含帮手奖励）
     const currentTotal = calcEfficiencyValue(calcType, pokeName, selectedSubs, currentNature);
     if (currentTotal < 0) {
         probDiv.innerHTML = '※ 当前宝可梦数据未完成，无法计算概率。';
@@ -77,7 +98,6 @@ function calculateProbability() {
             const cache = efficiencyCache.get(`${calcType}|${pokeName}|${simLevel}`);
             const { permList, effMatrix } = cache;
 
-            // 筛选符合锁金条件的排列
             const validIndices = [];
             for (let i = 0; i < permList.length; i++) {
                 const perm = permList[i];
@@ -100,12 +120,17 @@ function calculateProbability() {
             }
 
             const totalCombos = validIndices.length * 25;
-            const probability = (betterOrEqual / totalCombos) * 100;
-            const rankPercent = probability.toFixed(4);
+            const baseRatio = betterOrEqual / totalCombos;
+
+            const foodFactor = getFoodComboFactor(calcType, pokeName);
+            const finalRatio = baseRatio * foodFactor;
+            const probabilityPercent = finalRatio * 100;
+            const rankPercent = (baseRatio * 100).toFixed(4);
 
             const subsText = selectedSubs.join(', ');
             const lockText = lockGold > 0 ? ` (锁${lockGold}金)` : '';
             const levelText = simLevel === 4 ? '前4格(70级)' : '前3格(50级)';
+            const comboText = document.getElementById('foodCombo').value;
 
             let html = `<strong>【捕捉概率估算】</strong><br>`;
             html += `当前配置: ${subsText} | ${currentNature} | ${levelText}${lockText}<br>`;
@@ -115,7 +140,11 @@ function calculateProbability() {
             }
             html += `有效组合总数: ${totalCombos.toLocaleString()}<br>`;
             html += `不低于当前效率的组合: ${betterOrEqual.toLocaleString()}<br>`;
-            html += `<span style="font-size:1.1em;color:#e67e22;">捕捉概率(≥当前): <b>${probability.toFixed(6)}%</b></span><br>`;
+            html += `基础概率(副技能+性格): ${(baseRatio*100).toFixed(6)}%<br>`;
+            if (foodFactor < 1) {
+                html += `食材组合因子: ×${foodFactor.toFixed(4)} (${comboText})<br>`;
+            }
+            html += `<span style="font-size:1.1em;color:#e67e22;">最终捕捉概率: <b>${probabilityPercent.toFixed(6)}%</b></span><br>`;
             html += `超越组合比例: 排名前 ${rankPercent}%`;
 
             probDiv.innerHTML = html;
