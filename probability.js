@@ -41,20 +41,9 @@ function buildCache(calcType, pokeName, simLevel) {
     efficiencyCache.set(key, { permList: perms, effMatrix });
 }
 
-function getFoodComboFactor(calcType, pokeName) {
+function getFoodComboFactor() {
     const comboVal = document.getElementById('foodCombo').value;
     if (comboVal === 'random') return 1;
-
-    let apply = false;
-    if (calcType === '食材型') {
-        apply = true;
-    } else if (calcType === '技能型' && pokeName && SPECIAL_SKILL_MONS_DATA[pokeName]) {
-        const mon = SPECIAL_SKILL_MONS_DATA[pokeName];
-        if (mon.skillLabel && mon.skillLabel.includes('食材精选S')) {
-            apply = true;
-        }
-    }
-    if (!apply) return 1;
 
     const factors = {
         'AAA': 1/9,
@@ -122,7 +111,7 @@ function calculateProbability() {
             const totalCombos = validIndices.length * 25;
             const baseRatio = betterOrEqual / totalCombos;
 
-            const foodFactor = getFoodComboFactor(calcType, pokeName);
+            const foodFactor = getFoodComboFactor();
             const finalRatio = baseRatio * foodFactor;
             const probabilityPercent = finalRatio * 100;
             const rankPercent = (baseRatio * 100).toFixed(4);
@@ -132,20 +121,19 @@ function calculateProbability() {
             const levelText = simLevel === 4 ? '前4格(70级)' : '前3格(50级)';
             const comboText = document.getElementById('foodCombo').value;
 
-            let html = `<strong>【捕捉概率估算】</strong><br>`;
-            html += `当前配置: ${subsText} | ${currentNature} | ${levelText}${lockText}<br>`;
-            html += `纯理论效率比: <b>${currentTotal.toFixed(4)}</b><br>`;
-            if (subsText.includes('帮手奖励')) {
-                html += `<span style="color:#2980b9;">※ 帮手奖励已按最大团队加成(25%帮速)评估。</span><br>`;
-            }
-            html += `有效组合总数: ${totalCombos.toLocaleString()}<br>`;
-            html += `不低于当前效率的组合: ${betterOrEqual.toLocaleString()}<br>`;
-            html += `基础概率(副技能+性格): ${(baseRatio*100).toFixed(6)}%<br>`;
-            if (foodFactor < 1) {
-                html += `食材组合因子: ×${foodFactor.toFixed(4)} (${comboText})<br>`;
-            }
-            html += `<span style="font-size:1.1em;color:#e67e22;">最终捕捉概率: <b>${probabilityPercent.toFixed(6)}%</b></span><br>`;
-            html += `超越组合比例: 排名前 ${rankPercent}%`;
+let html = `<strong>【捕捉概率估算】</strong><br>`;
+html += `当前配置: ${subsText} | ${currentNature} | ${levelText}${lockText}<br>`;
+html += `纯理论效率比: <b>${currentTotal.toFixed(4)}</b><br>`;
+if (subsText.includes('帮手奖励')) {
+    html += `<span style="color:#2980b9;">※ 帮手奖励已按最大团队加成(25%帮速)评估。</span><br>`;
+}
+html += `有效组合总数: ${totalCombos.toLocaleString()}<br>`;
+html += `不低于当前效率的组合: ${betterOrEqual.toLocaleString()}<br>`;
+html += `基础概率(副技能+性格): ${(baseRatio*100).toFixed(6)}%<br>`;
+if (foodFactor < 1) {
+    html += `食材组合因子: ×${foodFactor.toFixed(4)} (${comboText})<br>`;
+}
+html += `<span style="font-size:1.1em;color:#e67e22;">捕捉概率(≥当前效率): <b>${probabilityPercent.toFixed(6)}%</b></span>`;
 
             probDiv.innerHTML = html;
         } catch (e) {
