@@ -318,10 +318,28 @@ const FOOD_ENERGY_DB = {
     "姜": 109, "番茄": 110, "可可": 151, "尾巴": 342, "大豆": 100,
     "玉米": 140, "咖啡": 153, "南瓜": 250, "酪梨": 162
 };
-const AVG_FOOD_ENERGY = Object.values(FOOD_ENERGY_DB).reduce((a,b)=>a+b,0) / Object.keys(FOOD_ENERGY_DB).length;
+const ALL_FOODS = Object.keys(FOOD_ENERGY_DB);
+
+// 计算“从全食材中随机抽取3种不同食材”时，每种食材的平均能量
+function computeExactAvgFoodEnergy() {
+    let totalEnergy = 0;
+    let count = 0;
+    for (let i = 0; i < ALL_FOODS.length; i++) {
+        for (let j = i + 1; j < ALL_FOODS.length; j++) {
+            for (let k = j + 1; k < ALL_FOODS.length; k++) {
+                totalEnergy += (FOOD_ENERGY_DB[ALL_FOODS[i]] + FOOD_ENERGY_DB[ALL_FOODS[j]] + FOOD_ENERGY_DB[ALL_FOODS[k]]) / 3;
+                count++;
+            }
+        }
+    }
+    return totalEnergy / count;
+}
+
+// 精确的平均食材能量（用于普通食材获取S）
+const EXACT_AVG_FOOD_ENERGY = computeExactAvgFoodEnergy();
 
 function getFoodEnergy(foodName) {
-    return FOOD_ENERGY_DB[foodName] || AVG_FOOD_ENERGY;
+    return FOOD_ENERGY_DB[foodName] || EXACT_AVG_FOOD_ENERGY;
 }
 
 function computeFoodProduction(mon, M_h, M_f) {
@@ -340,13 +358,13 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     let skillData = mon.skillLevels[level];
     if (!skillData) return { food: 0, details: [] };
 
-    // 普通食材获取S
+    // 普通食材获取S：使用精确的平均能量
     if (mon.skillLabel && mon.skillLabel.includes('食材获取S') && !mon.skillPool) {
         let totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         return {
             food: dailySkillCount * totalFood,
-            energy: dailySkillCount * totalFood * AVG_FOOD_ENERGY,
-            details: [`随机三种食材各${Math.floor(totalFood/3)}个 (均能: ${AVG_FOOD_ENERGY.toFixed(1)})`]
+            energy: dailySkillCount * totalFood * EXACT_AVG_FOOD_ENERGY,
+            details: [`随机三种食材各${Math.floor(totalFood/3)}个 (均能: ${EXACT_AVG_FOOD_ENERGY.toFixed(1)})`]
         };
     }
 
@@ -359,7 +377,7 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let details = [];
         let items = pool.items;
         let probs = pool.itemProbs;
-        let multipliers = pool.multipliers || probs.map(() => 1); // 默认倍率为1
+        let multipliers = pool.multipliers || probs.map(() => 1);
 
         for (let i = 0; i < items.length; i++) {
             let prob = probs[i];
