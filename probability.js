@@ -44,23 +44,31 @@ function buildCache(calcType, pokeName, simLevel) {
 function getFoodComboFactor() {
     const comboVal = document.getElementById('foodCombo').value;
     if (comboVal === 'random') return 1;
-
     const factors = {
         'AAA': 1/9,
         'AAB': 1/9,
         'AAC': 1/9,
-        'ABB': 2/9,
+        'AAX': 1/3,
         'ABA': 2/9,
+        'ABB': 2/9,
         'ABC': 2/9
     };
+    return factors[comboVal] || 1;
+}
     return factors[comboVal] || 1;
 }
 
 function calculateProbability() {
     const probDiv = document.getElementById('probResult');
-    const selectedSubs = getSelectedSubs();
+    let selectedSubs = getSelectedSubs();
     if (selectedSubs.length === 0) {
         probDiv.innerHTML = '※ 请至少选择一个副技能。';
+        probDiv.style.display = 'block';
+        return;
+    }
+    selectedSubs = selectedSubs.slice(0, simLevel);
+    if (selectedSubs.length === 0) {
+        probDiv.innerHTML = '※ 当前模拟等级下无副技能，请至少选择一个。';
         probDiv.style.display = 'block';
         return;
     }
