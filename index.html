@@ -465,20 +465,28 @@
 
     <div class="result" id="resultBox"></div>
 
-    <div class="prob-options">
-        <button class="prob-btn" onclick="calculateProbability()">🎲 计算捕捉概率</button>
-        <select id="lockGold" style="width: 90px;">
-            <option value="0">锁0金</option>
-            <option value="1">锁1金</option>
-            <option value="2">锁2金</option>
-            <option value="3">锁3金</option>
-        </select>
-        <select id="simLevel" style="width: 120px;">
-            <option value="4">70级(前4格)</option>
-            <option value="3">50级(前3格)</option>
-        </select>
-        <span style="font-size: 0.8em; color: gray;">（默认使用主性格）</span>
-    </div>
+<div class="prob-options">
+    <button class="prob-btn" onclick="calculateProbability()">🎲 计算捕捉概率</button>
+    <select id="lockGold" style="width: 75px;">
+        <option value="0">锁0金</option>
+        <option value="1">锁1金</option>
+        <option value="2">锁2金</option>
+        <option value="3">锁3金</option>
+    </select>
+    <select id="simLevel" style="width: 105px;">
+        <option value="4">70级(前4格)</option>
+        <option value="3">50级(前3格)</option>
+    </select>
+    <select id="foodCombo" style="width: 105px;">
+        <option value="random">随机</option>
+        <option value="AAA">AAA (1/9)</option>
+        <option value="AAB">AAB (1/9)</option>
+        <option value="AAC">AAC (1/9)</option>
+        <option value="ABB">ABB (2/9)</option>
+        <option value="ABA">ABA (2/9)</option>
+        <option value="ABC">ABC (2/9)</option>
+    </select>
+</div>
     <div class="prob-result" id="probResult"></div>
 
     <div class="history-panel" id="historyPanel">
@@ -495,6 +503,10 @@
 <script>
 // ========== 更新日志 ==========
 const UPDATE_LOG = [
+    { version: 'V0.1.9.6', date: '2026-07-13', notes: [
+    '捕捉概率算法进一步优化：帮手奖励现在按团队最大收益(25%帮速)评估，更符合玩家实际组队价值。',
+    '算法核心改用有序排列，并严格支持锁金顺序过滤。'
+]},
     { version: 'V0.1.9.5', date: '2026-07-13', notes: [
     '重写捕捉概率算法：现在基于所有可能的副技能与性格组合进行精确排名，概率结果更科学。',
     '修复此前副技能与性格分开相乘导致的概率估算偏差。',
@@ -941,14 +953,29 @@ function onTypeChange() {
     updateSkillTag();
     resultBox.innerHTML = '';
     removeSaveButton();
+    updateFoodComboDefault();
 }
-
 pokeSelect.addEventListener('change', () => {
     updateRealisticVisibility();
     updateSkillTag();
+    updateFoodComboDefault();
 });
 
 typeSelect.addEventListener('change', onTypeChange);
+function updateFoodComboDefault() {
+    const calcType = typeSelect.value;
+    const pokeValue = pokeSelect ? pokeSelect.value : '';
+    let defaultVal = 'random';
+    if (calcType === '食材型') {
+        defaultVal = 'AAA';
+    } else if (calcType === '技能型' && pokeValue && SPECIAL_SKILL_MONS_DATA[pokeValue]) {
+        const mon = SPECIAL_SKILL_MONS_DATA[pokeValue];
+        if (mon.skillLabel && mon.skillLabel.includes('食材精选S')) {
+            defaultVal = 'AAA';
+        }
+    }
+    document.getElementById('foodCombo').value = defaultVal;
+}
 
 // ========== 历史记录与保存 ==========
 function toggleRealistic() {
