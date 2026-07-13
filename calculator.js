@@ -192,6 +192,7 @@ function getFoodEnergy(foodName) {
 }
 
 function getBaseHelps(mon) {
+    if (!mon.interval) return 0;
     let baseInterval = mon.interval * 0.862 * 0.45;
     return 86400 / baseInterval;
 }
@@ -235,7 +236,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let critValue = typeof skillData === 'object' ? (skillData.critRate || skillData) : skillData;
         if (typeof skillData === 'number') critValue = skillData;
         else if (typeof skillData === 'object' && skillData.food) critValue = skillData.critRate;
-        // 统一显示为百分比：若 critValue < 1 则乘100
         let displayCrit = critValue < 1 ? (critValue * 100) : critValue;
         perSkillDetail = `料理漂亮成功的机率会提升${displayCrit}%`;
         let totalCritIncrease = skillCount * displayCrit;
@@ -262,12 +262,10 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let desc = `随机获得${totalFood}个食材`;
 
-        // 信使鸟
         if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S')) {
             let critRate = typeof skillData === 'object' && skillData.critRate ? skillData.critRate : 0;
             desc += `，有时额外获得4个糖果`;
         }
-        // 正电/颤弦蝾螈
         if (typeof skillData === 'object' && skillData.bonus) {
             let bonusItem = mon.foodName;
             let bonusPerSkill = skillData.bonus;
@@ -293,7 +291,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         let totalEnergy = baseEnergy + extraBonusEnergy;
         totalDetails.push(`获得食材${totalFoodOutput.toFixed(1)}个${bonusDesc}`);
 
-        // 信使鸟糖果
         if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S')) {
             let critRate = typeof skillData === 'object' && skillData.critRate ? skillData.critRate : 0;
             let candyCount = skillCount * critRate * 4;
@@ -304,11 +301,9 @@ function computeSkillProduction(mon, M_h, M_p, level) {
     }
 
     // 食材精选S（穿山王、岩殿居蟹、乌鸦头头、蝶结萌虻、大嘴娃等）
-    // 食材精选S（穿山王、岩殿居蟹、乌鸦头头、蝶结萌虻、大嘴娃等）
     if (isFoodSelectS) {
         let pool = mon.skillPool;
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
-        // 大嘴娃特殊描述：有概率双倍
         if (mon.skillLabel && mon.skillLabel.includes('怪力钳')) {
             perSkillDetail = `从特定食材中随机获得18个其中1种食材（有时获得36个）`;
         } else {
@@ -332,7 +327,6 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         }
         totalDetails = foodDetails;
 
-        // 乌鸦头头梦碎
         if (mon.skillLabel && mon.skillLabel.includes('超幸运') && typeof skillData === 'object' && skillData.shard4000) {
             let dreamProbs = mon.skillPool.dreamShardProbs || [0.112, 0.028];
             let shardLow = skillData.shard4000 * skillCount * dreamProbs[0];
@@ -350,10 +344,45 @@ function computeSkillProduction(mon, M_h, M_p, level) {
         };
     }
 
-    // 其他（能量填充等）
+    // 其他（能量填充等，包含能量填充M、树果遽增、传说、幻兽技能产出）
+    // 需要返回技能能量等，用于实际能量输出
+    if (mon.e_s !== undefined && !isFoodGetS && !isFoodSelectS && !isCookSuccessS) {
+        let isBerrySkill = mon.e_s_is_berry || false;
+        let skillEnergy = isBerrySkill ? (mon.e_s * mon.e_b * skillCount) : (mon.e_s * skillCount);
+        let skillCountFormatted = skillCount.toFixed(2);
+        if (mon.skillLabel && mon.skillLabel.includes('能量填充M')) {
+            perSkillDetail = `能量填充M，单次获得${mon.e_s}能量`;
+            totalDetails.push(`获得${skillEnergy.toFixed(0)}能量`);
+            return { food: 0, energy: skillEnergy, details: totalDetails, foodMap, perSkillDetail };
+        } else if (mon.skillLabel && mon.skillLabel.includes('树果遽增')) {
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b;
+            perSkillDetail = `让树果遽增，单次获得${mon.e_s}个树果`;
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
+        } else if (mon.skillLabel && mon.skillLabel.includes('新月祈祷')) {
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b;
+            perSkillDetail = `获得${mon.e_s}个树果，并回复全体11点活力`;
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}，回复活力${ (11 * skillCount).toFixed(1) }点`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
+        } else if (mon.skillLabel && mon.skillLabel.includes('梦魇')) {
+            let energyGained = mon.e_s * skillCount;
+            perSkillDetail = `梦魇·能量填充M，单次获得${mon.e_s}能量，减少自身5点活力`;
+            totalDetails.push(`获得${energyGained.toFixed(0)}能量，减少活力${ (5 * skillCount).toFixed(1) }点`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
+        } else {
+            // 通用树果遽增 (拉帝欧斯等)
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b;
+            perSkillDetail = `获得${mon.e_s}个树果`;
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
+        }
+    }
+
     return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '' };
 }
-
 function calculate() {
     let useRealistic = window.useRealistic || false;
     let calcType = typeSelect.value, nature = natureSelect.value;
@@ -618,7 +647,7 @@ function calculate() {
         return;
     }
 
-    // ========== 其余类型 ==========
+    // ========== 其余类型（能量填充M、树果遽增、传说宝可梦、幻兽） ==========
     let pokemonName = '';
     if (['传说宝可梦', '幻兽'].includes(calcType)) {
         pokemonName = pokeSelect.value;
@@ -666,6 +695,19 @@ function calculate() {
         }
     }
 
+    // ========== 实际能量输出（能量填充M、树果遽增、传说、幻兽） ==========
+    let dataObj = null;
+    if (calcType === '能量填充M') dataObj = ENERGY_MONS_DATA[pokemonName];
+    else if (calcType === '树果遽增') dataObj = BERRY_BOOST_MONS_DATA[pokemonName];
+    else if (calcType === '传说宝可梦') dataObj = LEGENDARY_MONS_DATA[pokemonName];
+    else if (calcType === '幻兽') dataObj = PHANTOM_MONS_DATA[pokemonName];
+
+    if (dataObj && !dataObj.unfinished) {
+        lines.push('');
+        lines.push('【实际能量】');
+        outputActualEnergy(dataObj, M_h, M_f, M_p_realistic, berryMult, lines);
+    }
+
     lines.push('');
     helperOverflowAnalysis(selectedSubs, lines);
 
@@ -680,4 +722,28 @@ function calculate() {
         lines.push('※ 神兽：技能受同属性队友影响，计算基于最大加成（78树果）。');
 
     resultBox.innerHTML = lines.join('<br>');
+}
+
+// 辅助函数：实际能量输出（被 calculate 调用）
+function outputActualEnergy(mon, M_h, M_f, M_p_realistic, berryMult, lines) {
+    let berryProd = computeBerryProduction(mon, M_h, berryMult);
+    lines.push(`树果: ${berryProd.count.toFixed(1)}个, 能量: ${berryProd.energy.toFixed(0)}`);
+
+    let foodProd = computeFoodProduction(mon, M_h, M_f);
+    let foodName = mon.foodName || '食材';
+    lines.push(`食材: ${foodProd.count.toFixed(1)}个${foodName}, 能量: ${foodProd.energy.toFixed(0)}`);
+
+    let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
+    lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
+
+    let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1);
+    if (skillProd.perSkillDetail) {
+        lines.push(`技能效果: ${skillProd.perSkillDetail}`);
+    }
+    if (skillProd.details.length > 0) {
+        lines.push(`技能产出: ${skillProd.details.join(', ')}`);
+    }
+
+    let totalEnergy = berryProd.energy + foodProd.energy + (skillProd.energy || 0);
+    lines.push(`总能量: ${totalEnergy.toFixed(0)}`);
 }
