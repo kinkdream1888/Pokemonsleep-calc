@@ -884,6 +884,16 @@ function onTypeChange() {
         }
         pokeSelect.value = '__other__';
         natureSelect.disabled = false;
+    } else if (currentType === '树果型') {
+        pokeRow.style.display = 'flex';
+        pokeSelect.innerHTML = '';
+        for (let mon of Object.keys(SPECIAL_BERRY_MONS_DATA)) {
+            let opt = document.createElement('option');
+            opt.value = mon;
+            opt.textContent = mon;
+            pokeSelect.appendChild(opt);
+        }
+        natureSelect.disabled = false;
     } else {
         pokeRow.style.display = 'none';
         natureSelect.disabled = false;
