@@ -3,7 +3,7 @@ function calcMultipliers(selectedSubs, nature, teamBoost = false) {
     let totalSubSpeed = 0.0;
     let skillAdd = 0.0;
     let foodAdd = 0.0;
-    let berryBonus = 0;
+    let berryBonus = 0; // 树果S改为+1个
 
     for (let sub of selectedSubs) {
         let s = SUB_SKILLS[sub];
@@ -11,7 +11,7 @@ function calcMultipliers(selectedSubs, nature, teamBoost = false) {
         totalSubSpeed += speedVal;
         if (s.skill > 1.0) skillAdd += (s.skill - 1.0);
         if (s.food > 1.0) foodAdd += (s.food - 1.0);
-        berryBonus += s.berry;
+        berryBonus += s.berry; // 树果S的berry字段为1，表示+1个
     }
 
     totalSubSpeed = Math.min(totalSubSpeed, MAX_SUB_SPEED);
@@ -86,9 +86,9 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
         let skillBerriesCfg = data.e_s * (dailySkillCfg + triggerCfg * 2);
 
         let p_f_cfg = Math.min(data.prob_f * M_f, 1.0);
-        let berryPartCfg = (1 - p_f_cfg) * baseBerryCount * data.e_b;
+        let berryPartCfg = (1 - p_f_cfg) * baseBerryCount * data.e_b * favoredMult;
         let foodPartCfg = p_f_cfg * e_f_base;
-        let E_config = M_h * (86400 / baseInterval) * (berryPartCfg + foodPartCfg) + skillBerriesCfg * data.e_b;
+        let E_config = M_h * (86400 / baseInterval) * (berryPartCfg + foodPartCfg) + skillBerriesCfg * data.e_b * favoredMult;
 
         total = E_config / E_base;
         improve = (total - 1) * 100;
@@ -113,7 +113,7 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
         }
         
         let E_base = calculateEnergy(data, 1.0, 1.0, 1.0, 0, 1);
-        let E_config = calculateEnergy(data, M_h, M_p, M_f, berryBonus, 1);
+        let E_config = calculateEnergy(data, M_h, M_p, M_f, berryBonus, favoredMult);
         total = E_config / E_base;
         improve = (total - 1) * 100;
     } else { total = 1; improve = 0; }
@@ -200,6 +200,7 @@ function getBaseHelps(mon) {
     return 86400 / baseInterval;
 }
 
+// 修改后的 computeBerryProduction，增加 foodProb 参数以正确扣除食材概率
 function computeBerryProduction(mon, M_h, M_f, berryBonus, favoredMult = 1) {
     let dailyHelps = getBaseHelps(mon) * M_h;
     let foodProb = Math.min(mon.prob_f * M_f, 1.0);
@@ -215,7 +216,7 @@ function computeFoodProduction(mon, M_h, M_f) {
     let avgFood = mon.avg_food || 4.667;
     let foodCount = dailyHelps * foodProb * avgFood;
     let e_f = getFoodEnergy(mon.foodName) * avgFood;
-    let foodEnergy = foodCount * (e_f / avgFood);
+    let foodEnergy = foodCount * (e_f / avgFood); // 保持原有计算方式，实际 e_f/avgFood = getFoodEnergy(...)
     return { count: foodCount, energy: foodEnergy };
 }
 
@@ -225,7 +226,6 @@ function computeSkillCount(mon, M_h, M_p) {
     return dailyHelps * skillProb;
 }
 
-// 统一返回单次技能的数据（food/energy/details 不再乘 skillCount）
 function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMult = 1) {
     let skillCount = computeSkillCount(mon, M_h, M_p);
     let skillData = mon.skillLevels[level];
@@ -238,32 +238,37 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
     let isCookSuccessS = mon.skillLabel && (mon.skillLabel.includes('料理成功S') || mon.skillLabel.includes('料理辅助S'));
     let isHeracross = mon.skillLabel && mon.skillLabel.includes('健美·料理辅助S');
 
-    // 料理成功S
+    // 料理成功S（咚咚鼠、古月鸟、老翁龙等单纯加暴击，无食材）
     if (isCookSuccessS && !isFoodGetS && !isFoodSelectS) {
         let critValue = typeof skillData === 'object' ? (skillData.critRate || skillData) : skillData;
         if (typeof skillData === 'number') critValue = skillData;
         else if (typeof skillData === 'object' && skillData.food) critValue = skillData.critRate;
         let displayCrit = critValue < 1 ? (critValue * 100) : critValue;
         perSkillDetail = `料理漂亮成功的机率会提升${displayCrit}%`;
-        totalDetails.push(`漂亮成功率共提升${(skillCount * displayCrit).toFixed(1)}%`);
+        let totalCritIncrease = skillCount * displayCrit;
+        totalDetails.push(`漂亮成功率共提升${totalCritIncrease.toFixed(1)}%`);
         return { food: 0, energy: 0, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 赫拉克罗斯
+    // 赫拉克罗斯（食材+暴击）
     if (isHeracross) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let critRate = typeof skillData === 'object' ? skillData.critRate : 0;
         let displayCrit = critRate < 1 ? (critRate * 100).toFixed(0) : critRate;
         perSkillDetail = `随机获得${totalFood}个食材，并且料理漂亮成功的机率会提升${displayCrit}%`;
-        totalDetails.push(`获得食材${totalFood.toFixed(1)}个`);
-        totalDetails.push(`漂亮成功率共提升${(skillCount * critRate * 100).toFixed(1)}%`);
-        return { food: totalFood, energy: totalFood * EXACT_AVG_FOOD_ENERGY, details: totalDetails, foodMap, perSkillDetail };
+        let baseFood = skillCount * totalFood;
+        let baseEnergy = baseFood * EXACT_AVG_FOOD_ENERGY;
+        let totalCritIncrease = skillCount * critRate * 100;
+        totalDetails.push(`获得食材${baseFood.toFixed(1)}个`);
+        totalDetails.push(`漂亮成功率共提升${totalCritIncrease.toFixed(1)}%`);
+        return { food: baseFood, energy: baseEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 普通食材获取S
+    // 普通食材获取S（水伊布、信使鸟、正电/颤弦、请假王等）
     if (isFoodGetS) {
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
         let desc = `随机获得${totalFood}个食材`;
+
         if (mon.skillLabel && mon.skillLabel.includes('礼物·食材获取S')) {
             let critRate = typeof skillData === 'object' && skillData.critRate ? skillData.critRate : 0;
             desc += `，有时额外获得4个糖果`;
@@ -275,14 +280,14 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
         }
         perSkillDetail = desc;
 
-        let baseFood = totalFood;
+        let baseFood = skillCount * totalFood;
         let baseEnergy = baseFood * EXACT_AVG_FOOD_ENERGY;
         let extraBonusFood = 0, extraBonusEnergy = 0;
         let bonusDesc = '';
 
         if (typeof skillData === 'object' && skillData.bonus) {
             let bonusItem = mon.foodName;
-            let bonusCount = skillData.bonus;
+            let bonusCount = skillData.bonus * skillCount;
             extraBonusFood = bonusCount;
             extraBonusEnergy = bonusCount * getFoodEnergy(bonusItem);
             foodMap[bonusItem] = bonusCount;
@@ -302,7 +307,7 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
         return { food: totalFoodOutput, energy: totalEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 食材精选S
+    // 食材精选S（穿山王、岩殿居蟹、乌鸦头头、蝶结萌虻、大嘴娃等）
     if (isFoodSelectS) {
         let pool = mon.skillPool;
         totalFood = typeof skillData === 'object' ? skillData.food : skillData;
@@ -338,21 +343,21 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
         }
 
         return {
-            food: expectedFood,
-            energy: expectedEnergy,
+            food: skillCount * expectedFood,
+            energy: skillCount * expectedEnergy,
             details: totalDetails,
             foodMap,
             perSkillDetail
         };
     }
     
-    // 帮手加速
+    // 帮手加速（雷公、炎帝、水君）
     if (mon.skillType === 'helperBoost') {
         let boostTimes = typeof skillData === 'number' ? skillData : (skillData.boost || 11);
-        perSkillDetail = `全队立刻完成一定次数的帮忙，满足条件时效果提升`;
-        let p_f = Math.min(mon.prob_f * 1.0, 1.0);
+        perSkillDetail = `让全队立刻完成55次帮忙（自身获得${boostTimes}次帮忙）`;
+        let p_f = Math.min(mon.prob_f * 1.0, 1.0); // 假设 M_f=1，因为帮手加速不受食概影响
         let avgFoodCount = mon.avg_food || 2.333;
-        let baseBerryCount = (mon.berry_count || 1) + berryBonus;
+        let baseBerryCount = (mon.berry_count || 1) + berryBonus; // 树果S +1
         let totalBerry = boostTimes * (1 - p_f) * baseBerryCount;
         let totalFoodCount = boostTimes * p_f * avgFoodCount;
         let berryEnergy = totalBerry * mon.e_b * favoredMult;
@@ -362,13 +367,13 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
         return { food: totalFoodCount, energy: berryEnergy + foodEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 帮手支援S
+    // 帮手支援S（花岩怪）
     if (mon.skillType === 'helperSupport') {
         let supportTimes = typeof skillData === 'number' ? skillData : (Array.isArray(skillData) ? skillData[skillData.length-1] : 12);
         perSkillDetail = `队伍中某1只宝可梦立刻完成${supportTimes}次帮忙`;
         let p_f = Math.min(mon.prob_f * 1.0, 1.0);
         let avgFoodCount = mon.avg_food || 4.667;
-        let baseBerryCount = (mon.berry_count || 1) + berryBonus;
+        let baseBerryCount = (mon.berry_count || 1) + berryBonus; // 树果S +1（虽然花岩怪是食材型，基础1个树果）
         let totalBerry = supportTimes * (1 - p_f) * baseBerryCount;
         let totalFoodCount = supportTimes * p_f * avgFoodCount;
         let berryEnergy = totalBerry * mon.e_b * favoredMult;
@@ -378,52 +383,63 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
         return { food: totalFoodCount, energy: berryEnergy + foodEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 能量填充S/M
+    // 能量填充S / 能量填充M / 能量填充S·#1~#2（大葱鸭、阿勃梭鲁、穿着熊等）
     if (mon.skillLabel && (mon.skillLabel.includes('能量填充S') || mon.skillLabel.includes('能量填充M'))) {
         let energyPerSkill = typeof skillData === 'number' ? skillData : skillData;
         if (mon.skillLabel.includes('#1~#2')) {
-            energyPerSkill = skillData;
+            energyPerSkill = skillData; // 已经是平均值
         }
-        let desc = mon.skillLabel.includes('#1~#2') ? '能量增加1606~6424' :
-                   mon.skillLabel.includes('能量填充M') ? '能量增加6858' : '能量增加3212';
+        let desc = mon.skillLabel;
+        if (mon.skillLabel.includes('#1~#2')) {
+            desc = `能量增加1606~6424`; // 根据你的设定
+        } else if (mon.skillLabel.includes('能量填充M')) {
+            desc = `能量增加6858`;
+        } else {
+            desc = `能量增加3212`;
+        }
         perSkillDetail = desc;
-        totalDetails.push(`获得${energyPerSkill.toFixed(0)}能量`);
-        return { food: 0, energy: energyPerSkill, details: totalDetails, foodMap, perSkillDetail };
+        let totalSkillEnergy = skillCount * energyPerSkill;
+        totalDetails.push(`获得${totalSkillEnergy.toFixed(0)}能量`);
+        return { food: 0, energy: totalSkillEnergy, details: totalDetails, foodMap, perSkillDetail };
     }
 
-    // 树果遽增、传说、幻兽等
+    // 其他（能量填充等，包含能量填充M、树果遽增、传说、幻兽技能产出）
     if (mon.e_s !== undefined && !isFoodGetS && !isFoodSelectS && !isCookSuccessS) {
+        let isBerrySkill = mon.e_s_is_berry || false;
         if (mon.skillLabel && mon.skillLabel.includes('能量填充M')) {
             perSkillDetail = `能量增加6858`;
-            totalDetails.push(`获得${mon.e_s.toFixed(0)}能量`);
-            return { food: 0, energy: mon.e_s, details: totalDetails, foodMap, perSkillDetail };
+            let totalSkillEnergy = mon.e_s * skillCount;
+            totalDetails.push(`获得${totalSkillEnergy.toFixed(0)}能量`);
+            return { food: 0, energy: totalSkillEnergy, details: totalDetails, foodMap, perSkillDetail };
         } else if (mon.skillLabel && mon.skillLabel.includes('树果遽增')) {
-            let berries = mon.e_s;
-            let energy = berries * mon.e_b * favoredMult;
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b * favoredMult; // 喜爱树果生效
             perSkillDetail = `获得自己和队伍的宝可梦捡来的树果`;
-            totalDetails.push(`获得${berries}个树果, 能量: ${energy.toFixed(0)}`);
-            return { food: 0, energy: energy, details: totalDetails, foodMap, perSkillDetail };
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
         } else if (mon.skillLabel && mon.skillLabel.includes('新月祈祷')) {
-            let berries = mon.e_s;
-            let energy = berries * mon.e_b * favoredMult;
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b * favoredMult;
             perSkillDetail = `回复全队11点活力，获得自己和队伍的宝可梦捡来的树果`;
-            totalDetails.push(`获得${berries}个树果, 能量: ${energy.toFixed(0)}，回复活力${ (11 * skillCount).toFixed(1) }点`);
-            return { food: 0, energy: energy, details: totalDetails, foodMap, perSkillDetail };
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}，回复活力${(11 * skillCount).toFixed(1)}点`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
         } else if (mon.skillLabel && mon.skillLabel.includes('梦魇')) {
+            let energyGained = mon.e_s * skillCount;
             perSkillDetail = `能量增加18515，且让恶属性以外的宝可梦活力下降12`;
-            totalDetails.push(`获得${mon.e_s.toFixed(0)}能量，减少活力${ (12 * skillCount).toFixed(1) }点`);
-            return { food: 0, energy: mon.e_s, details: totalDetails, foodMap, perSkillDetail };
+            totalDetails.push(`获得${energyGained.toFixed(0)}能量，减少活力${(12 * skillCount).toFixed(1)}点`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
         } else {
-            let berries = mon.e_s;
-            let energy = berries * mon.e_b * favoredMult;
+            // 通用树果遽增 (拉帝欧斯等)
+            let berriesGained = mon.e_s * skillCount;
+            let energyGained = berriesGained * mon.e_b * favoredMult;
             perSkillDetail = `获得自己和队伍的宝可梦捡来的树果`;
-            totalDetails.push(`获得${berries}个树果, 能量: ${energy.toFixed(0)}`);
-            return { food: 0, energy: energy, details: totalDetails, foodMap, perSkillDetail };
+            totalDetails.push(`获得${berriesGained.toFixed(1)}个树果, 能量: ${energyGained.toFixed(0)}`);
+            return { food: 0, energy: energyGained, details: totalDetails, foodMap, perSkillDetail };
         }
     }
 
     return { food: 0, energy: 0, details: [], foodMap: {}, perSkillDetail: '' };
-            }
+}
 function calculate() {
     let useRealistic = window.useRealistic || false;
     let calcType = typeSelect.value, nature = natureSelect.value;
@@ -469,8 +485,7 @@ function calculate() {
             let foodProd = computeFoodProduction(mon, M_h, M_f);
             let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, 6, berryBonus, berryEnergyMult);
             let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
-            let skillTotalEnergy = skillProd.energy * skillCount;
-            let totalEnergy = berryProd.energy + foodProd.energy + skillTotalEnergy;
+            let totalEnergy = berryProd.energy + foodProd.energy + skillProd.energy;
             lines.push('');
             lines.push('【无限持有模式】');
             lines.push(`树果: ${berryProd.count.toFixed(1)}个, 能量: ${berryProd.energy.toFixed(0)}`);
@@ -492,8 +507,8 @@ function calculate() {
         // 通用树果型
         let berryBoost = selectedSubs.includes('树果S') ? 1.5 : 1.0;
         let total = M_h * berryBoost;
-        let soloResult = compute('树果型', '', selectedSubs, nature, false, false, 1);
-        let teamResult = hasHelper ? compute('树果型', '', selectedSubs, nature, true, false, 1) : null;
+        let soloResult = compute('树果型', '', selectedSubs, nature, false, false, berryEnergyMult);
+        let teamResult = hasHelper ? compute('树果型', '', selectedSubs, nature, true, false, berryEnergyMult) : null;
         let lines = [];
         lines.push(`类型: 树果型 (通用树果型)`);
         lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
@@ -520,9 +535,8 @@ function calculate() {
             let foodProd = computeFoodProduction(mon, M_h, M_f);
             let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
             let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1, berryBonus, berryEnergyMult);
-            let skillTotalEnergy = skillProd.energy * skillCount;
-            let soloResult = compute('食材型', pokeValue, selectedSubs, nature, false, false, 1);
-            let teamResult = hasHelper ? compute('食材型', pokeValue, selectedSubs, nature, true, false, 1) : null;
+            let soloResult = compute('食材型', pokeValue, selectedSubs, nature, false, false, berryEnergyMult);
+            let teamResult = hasHelper ? compute('食材型', pokeValue, selectedSubs, nature, true, false, berryEnergyMult) : null;
 
             let lines = [];
             lines.push(`类型: 食材型 (${pokeValue})`);
@@ -540,6 +554,7 @@ function calculate() {
 
             lines.push('');
             lines.push('【基础产能】');
+            // 百变怪特殊处理：AAC 分列显示
             if (mon.food_combination) {
                 let dailyHelps = getBaseHelps(mon) * M_h;
                 let foodProb = Math.min(mon.prob_f * M_f, 1.0);
@@ -547,13 +562,14 @@ function calculate() {
                 let combParts = [];
                 let totalFoodEnergy = 0;
                 for (let slot of mon.food_combination) {
-                    let count = totalFoodHelps * (slot.count / 3);
+                    let count = totalFoodHelps * (slot.count / 3); // 每槽概率 1/3
                     let energy = count * getFoodEnergy(slot.food);
                     totalFoodEnergy += energy;
                     combParts.push(`${count.toFixed(1)}个${slot.food} (能量 ${energy.toFixed(0)})`);
                 }
                 lines.push(`食材: ${combParts.join(', ')}`);
                 lines.push(`总食材能量: ${totalFoodEnergy.toFixed(0)}`);
+                // 覆盖 foodProd 用于后续专家对比
                 foodProd.count = totalFoodHelps * (mon.avg_food || 3.333);
                 foodProd.energy = totalFoodEnergy;
             } else {
@@ -607,8 +623,8 @@ function calculate() {
             return;
         }
         // 纯食材型（通用）
-        let soloResult = compute('食材型', '', selectedSubs, nature, false, false, 1);
-        let teamResult = hasHelper ? compute('食材型', '', selectedSubs, nature, true, false, 1) : null;
+        let soloResult = compute('食材型', '', selectedSubs, nature, false, false, berryEnergyMult);
+        let teamResult = hasHelper ? compute('食材型', '', selectedSubs, nature, true, false, berryEnergyMult) : null;
         let lines = [];
         lines.push(`类型: 食材型 (其他)`);
         lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
@@ -636,9 +652,8 @@ function calculate() {
             let skillCount = computeSkillCount(mon, M_h, M_p_realistic);
             let foodProd = computeFoodProduction(mon, M_h, M_f);
             let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1, berryBonus, berryEnergyMult);
-            let skillTotalEnergy = skillProd.energy * skillCount;
-            let soloResult = compute('技能型', pokeValue, selectedSubs, nature, false, false, 1);
-            let teamResult = hasHelper ? compute('技能型', pokeValue, selectedSubs, nature, true, false, 1) : null;
+            let soloResult = compute('技能型', pokeValue, selectedSubs, nature, false, false, berryEnergyMult);
+            let teamResult = hasHelper ? compute('技能型', pokeValue, selectedSubs, nature, true, false, berryEnergyMult) : null;
 
             let lines = [];
             lines.push(`类型: 技能型 (${pokeValue})`);
@@ -691,8 +706,8 @@ function calculate() {
             return;
         }
         // 功能型
-        let soloResult = compute('技能型', '', selectedSubs, nature, false, false, 1);
-        let teamResult = hasHelper ? compute('技能型', '', selectedSubs, nature, true, false, 1) : null;
+        let soloResult = compute('技能型', '', selectedSubs, nature, false, false, berryEnergyMult);
+        let teamResult = hasHelper ? compute('技能型', '', selectedSubs, nature, true, false, berryEnergyMult) : null;
         let lines = [];
         lines.push(`类型: 技能型 (功能型)`);
         lines.push(`副技能: ${selectedSubs.length ? selectedSubs.join(', ') : '无'} | 性格: ${nature}`);
@@ -718,14 +733,14 @@ function calculate() {
         pokemonName = pokeSelect.value;
     }
 
-    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, useRealistic, 1);
+    let soloResult = compute(calcType, pokemonName, selectedSubs, nature, false, useRealistic, berryEnergyMult);
     if (soloResult.total === "数据待补全") {
         resultBox.innerHTML = `<b>${pokeSelect.options[pokeSelect.selectedIndex].text} 的数据尚未完成，无法计算。</b>`;
         return;
     }
     
     let teamResult = null;
-    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, useRealistic, 1);
+    if (hasHelper) teamResult = compute(calcType, pokemonName, selectedSubs, nature, true, useRealistic, berryEnergyMult);
 
     let lines = [];
     let typeLabel = calcType;
@@ -744,9 +759,9 @@ function calculate() {
     }
 
     if (useRealistic && (['技能型', '能量填充M', '树果遽增', '传说宝可梦', '幻兽'].includes(calcType))) {
-        let realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true, 1);
+        let realisticSolo = compute(calcType, pokemonName, selectedSubs, nature, false, true, berryEnergyMult);
         let realisticTeam = null;
-        if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true, 1);
+        if (hasHelper) realisticTeam = compute(calcType, pokemonName, selectedSubs, nature, true, true, berryEnergyMult);
         lines.push('');
         lines.push('【实战预估】');
         lines.push(`M_p (实际损耗): ${realisticSolo.M_p}`);
@@ -758,7 +773,7 @@ function calculate() {
         }
     }
 
-    // ========== 实际能量输出 ==========
+    // ========== 实际能量输出（能量填充M、树果遽增、传说、幻兽） ==========
     let dataObj = null;
     if (calcType === '能量填充M') dataObj = ENERGY_MONS_DATA[pokemonName];
     else if (calcType === '树果遽增') dataObj = BERRY_BOOST_MONS_DATA[pokemonName];
@@ -800,7 +815,6 @@ function outputActualEnergy(mon, M_h, M_f, M_p_realistic, berryBonus, berryEnerg
     lines.push(`技能次数: ${skillCount.toFixed(2)}次`);
 
     let skillProd = computeSkillProduction(mon, M_h, M_p_realistic, mon.skillLevels.length - 1, berryBonus, berryEnergyMult);
-    let skillTotalEnergy = skillProd.energy * skillCount;
     if (skillProd.perSkillDetail) {
         lines.push(`技能效果: ${skillProd.perSkillDetail}`);
     }
@@ -808,6 +822,6 @@ function outputActualEnergy(mon, M_h, M_f, M_p_realistic, berryBonus, berryEnerg
         lines.push(`技能产出: ${skillProd.details.join(', ')}`);
     }
 
-    let totalEnergy = berryProd.energy + foodProd.energy + skillTotalEnergy;
+    let totalEnergy = berryProd.energy + foodProd.energy + (skillProd.energy || 0);
     lines.push(`总能量: ${totalEnergy.toFixed(0)}`);
 }
