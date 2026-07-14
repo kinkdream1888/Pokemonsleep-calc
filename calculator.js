@@ -112,6 +112,7 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
             data.e_s_is_berry = data.e_s_is_berry !== undefined ? data.e_s_is_berry : false;
         }
         
+        // 理论倍率计算时喜爱树果乘数固定为1
         let E_base = calculateEnergy(data, 1.0, 1.0, 1.0, 0, 1);
         let E_config = calculateEnergy(data, M_h, M_p, M_f, berryBonus, 1);
         total = E_config / E_base;
@@ -120,8 +121,85 @@ function compute(calcType, pokemonName, selectedSubs, nature, teamBoost, useReal
     return { total: typeof total === 'string' ? total : total.toFixed(4), improve: improve.toFixed ? improve.toFixed(2) : improve, M_h: M_h.toFixed(4), M_p: M_p.toFixed(4), M_f: M_f.toFixed(4) };
 }
 
-// (computeHybridOutput, helperOverflowAnalysis, 产能计算常量保持不变...)
-// 为节省篇幅，中间未修改的函数这里省略，保持与原文件一致
+function computeHybridOutput(pokemonName, selectedSubs, nature, useRealistic) {
+    let mon = HYBRID_FOOD_MONS_DATA[pokemonName];
+    let baseInterval = mon.interval * 0.862;
+    let actualInterval = baseInterval * 0.45;
+    let baseHelps = 86400 / actualInterval;
+
+    let { speedMult: M_h, foodMult: M_f, skillMult: M_p, berryBonus } = calcMultipliers(selectedSubs, nature, false);
+
+    if (useRealistic) {
+        let coeff = REALISTIC_COEFF[pokemonName] || 0.92;
+        M_p *= coeff;
+    }
+
+    let dailyHelps = baseHelps * M_h;
+    let foodProb = Math.min(mon.prob_f * M_f, 1.0);
+    let foodCount = dailyHelps * foodProb * mon.avg_food;
+
+    let skillProb = mon.prob_s * M_p;
+    let skillCountNoSleep = dailyHelps * skillProb;
+    let skillCountSleep = skillCountNoSleep * mon.sleep_coef;
+
+    return {
+        foodCount, skillNoSleep: skillCountNoSleep, skillSleep: skillCountSleep,
+        M_h, M_f, M_p,
+    };
+}
+
+function helperOverflowAnalysis(selectedSubs, lines) {
+    let hasHelper = selectedSubs.includes('帮手奖励');
+    if (hasHelper) {
+        let baseSpeed = 0.0;
+        if (selectedSubs.includes('帮M')) baseSpeed += 0.14;
+        if (selectedSubs.includes('帮S')) baseSpeed += 0.07;
+        let remaining = MAX_SUB_SPEED - baseSpeed;
+        let maxHelpers = Math.floor(remaining / 0.05);
+        let text = '※ 帮手奖励团队溢出分析：';
+        if (maxHelpers >= 5) text += '即使5个帮手奖励也不会溢出35%上限。';
+        else {
+            let overflow5 = (baseSpeed + 0.25) - MAX_SUB_SPEED;
+            if (overflow5 > 0) text += `5个帮手奖励将溢出${(overflow5*100).toFixed(1)}%帮速（超出${maxHelpers}个后溢出）。`;
+            else text += `5个帮手奖励未溢出。`;
+        }
+        lines.push(text);
+    }
+}
+
+// ========== 产能计算 ==========
+const FOOD_ENERGY_DB = {
+    "大葱": 185, "蘑菇": 167, "蛋": 115, "土豆": 124, "苹果": 90,
+    "香草": 130, "肠": 103, "牛奶": 98, "蜂蜜": 101, "油": 121,
+    "姜": 109, "番茄": 110, "可可": 151, "尾巴": 342, "大豆": 100,
+    "玉米": 140, "咖啡": 153, "南瓜": 250, "酪梨": 162
+};
+const ALL_FOODS = Object.keys(FOOD_ENERGY_DB);
+
+function computeExactAvgFoodEnergy() {
+    let totalEnergy = 0;
+    let count = 0;
+    for (let i = 0; i < ALL_FOODS.length; i++) {
+        for (let j = i + 1; j < ALL_FOODS.length; j++) {
+            for (let k = j + 1; k < ALL_FOODS.length; k++) {
+                totalEnergy += (FOOD_ENERGY_DB[ALL_FOODS[i]] + FOOD_ENERGY_DB[ALL_FOODS[j]] + FOOD_ENERGY_DB[ALL_FOODS[k]]) / 3;
+                count++;
+            }
+        }
+    }
+    return totalEnergy / count;
+}
+const EXACT_AVG_FOOD_ENERGY = computeExactAvgFoodEnergy();
+
+function getFoodEnergy(foodName) {
+    return FOOD_ENERGY_DB[foodName] || EXACT_AVG_FOOD_ENERGY;
+}
+
+function getBaseHelps(mon) {
+    if (!mon.interval) return 0;
+    let baseInterval = mon.interval * 0.862 * 0.45;
+    return 86400 / baseInterval;
+}
 
 function computeBerryProduction(mon, M_h, M_f, berryBonus, favoredMult = 1) {
     let dailyHelps = getBaseHelps(mon) * M_h;
@@ -276,11 +354,11 @@ function computeSkillProduction(mon, M_h, M_p, level, berryBonus = 0, favoredMul
     // 帮手加速（雷公、炎帝、水君）
     if (mon.skillType === 'helperBoost') {
         let boostTimes = typeof skillData === 'number' ? skillData : 11;
-        perSkillDetail = `让全队立刻完成55次帮忙（自身获得${boostTimes}次帮忙）`;
+        perSkillDetail = `让全队立刻完成55次帮忙（自身每次技能获得${boostTimes}次帮忙）`;
         let p_f = Math.min(mon.prob_f * 1.0, 1.0);
         let avgFoodCount = mon.avg_food || 2.333;
         let baseBerryCount = (mon.berry_count || 1) + berryBonus;
-        // 单次产出
+        // 单次技能产出
         let singleBerry = boostTimes * (1 - p_f) * baseBerryCount;
         let singleFood = boostTimes * p_f * avgFoodCount;
         // 全天产出 = 单次 × 技能次数
